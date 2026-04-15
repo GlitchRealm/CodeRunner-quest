@@ -87,7 +87,7 @@ export class PhysicsEngine {
         return result;
         
         } catch (error) {
-            console.error('Error in checkCollision:', error);
+            // Error in checkCollision (log removed)
             return { collision: false };
         }
     }

@@ -48,7 +48,7 @@ export class SettingsSystem {
         this.settingsCategories = [
             {
                 title: 'Audio',
-                icon: '🔊',
+                icon: '',
                 color: '#22c55e',
                 description: 'Sound and music settings',
                 settings: [
@@ -145,7 +145,7 @@ export class SettingsSystem {
             },
             {
                 title: 'Gameplay',
-                icon: '🎮',
+                icon: '',
                 color: '#8b5cf6',
                 description: 'Game behavior and mechanics',
                 settings: [
@@ -200,7 +200,7 @@ export class SettingsSystem {
             },
             {
                 title: 'Graphics',
-                icon: '🖥️',
+                icon: '',
                 color: '#3b82f6',
                 description: 'Visual quality and performance',
                 settings: [
@@ -256,7 +256,7 @@ export class SettingsSystem {
             },
             {
                 title: 'Data',
-                icon: '💾',
+                icon: '',
                 color: '#f59e0b',
                 description: 'Save data and privacy',
                 settings: [
@@ -399,7 +399,7 @@ export class SettingsSystem {
             const localData = localStorage.getItem('coderunner_settings');
             if (localData) {
                 localSettings = JSON.parse(localData);
-                console.log('📱 Local settings loaded');
+                 ('📱 Local settings loaded');
             }
             
             // Try to load from cloud if logged in
@@ -407,7 +407,7 @@ export class SettingsSystem {
                 try {
                     cloudSettings = await this.loadFromCloud();
                     if (cloudSettings && Object.keys(cloudSettings).length > 0) {
-                        console.log('☁️ Cloud settings loaded');
+                         ('☁️ Cloud settings loaded');
                         
                         // Check for discrepancies and log them
                         this.checkSettingsDiscrepancies(localSettings, cloudSettings);
@@ -432,12 +432,12 @@ export class SettingsSystem {
             // If we loaded cloud settings, save them locally for offline access
             if (Object.keys(cloudSettings).length > 0) {
                 localStorage.setItem('coderunner_settings', JSON.stringify(mergedSettings));
-                console.log('💾 Cloud settings saved to local storage for offline access');
+                 ('💾 Cloud settings saved to local storage for offline access');
             }
             
             // Apply settings to game after loading
             setTimeout(() => this.applySettingsToGame(), 100);
-            console.log('✅ Settings loaded successfully');
+             ('✅ Settings loaded successfully');
         } catch (e) {
             console.warn('❌ Failed to load settings:', e);
         }
@@ -453,7 +453,7 @@ export class SettingsSystem {
                 
                 // Get settings from user profile
                 if (userProfileSystem.userProfile && userProfileSystem.userProfile.settings) {
-                    console.log('☁️ Settings found in user profile');
+                     ('☁️ Settings found in user profile');
                     return userProfileSystem.userProfile.settings;
                 }
                 
@@ -467,7 +467,7 @@ export class SettingsSystem {
                     if (profileDoc.exists) {
                         const data = profileDoc.data();
                         if (data.settings) {
-                            console.log('☁️ Settings loaded directly from Firestore');
+                             ('☁️ Settings loaded directly from Firestore');
                             return data.settings;
                         }
                     }
@@ -493,7 +493,7 @@ export class SettingsSystem {
             
             // Save to localStorage
             localStorage.setItem('coderunner_settings', JSON.stringify(settings));
-            console.log('💾 Settings saved to localStorage');
+             ('💾 Settings saved to localStorage');
             
             // Save to cloud storage if logged in
             if (this.gameInstance?.userProfileSystem?.isLoggedIn) {
@@ -506,7 +506,7 @@ export class SettingsSystem {
                     });
                 }
             } else {
-                console.log('📝 Not logged in - settings saved locally only');
+                 ('📝 Not logged in - settings saved locally only');
             }
             
             // Create backup if enabled
@@ -515,7 +515,7 @@ export class SettingsSystem {
             }
             
             this.showSaveConfirmation();
-            console.log('✅ Settings saved successfully');
+             ('✅ Settings saved successfully');
         } catch (e) {
             console.warn('❌ Failed to save settings:', e);
             this.showSaveError();
@@ -537,7 +537,7 @@ export class SettingsSystem {
                     
                     // Save the profile
                     await userProfileSystem.saveUserProfile();
-                    console.log('☁️ Settings synced to cloud');
+                     ('☁️ Settings synced to cloud');
                 } else {
                     console.warn('☁️ User profile not available for settings sync');
                 }
@@ -567,7 +567,7 @@ export class SettingsSystem {
             }
             
             localStorage.setItem('coderunner_settings_backups', JSON.stringify(backups));
-            console.log('💾 Local backup created');
+             ('💾 Local backup created');
         } catch (error) {
             console.warn('💾 Failed to create local backup:', error);
         }
@@ -713,7 +713,7 @@ export class SettingsSystem {
             this.gameInstance.applyGraphicsQuality();
         }
 
-        console.log('✅ Settings applied to game instance');
+         ('✅ Settings applied to game instance');
     }
     
     /**
@@ -853,7 +853,7 @@ export class SettingsSystem {
                 // Apply graphics quality changes immediately
                 this.gameInstance.graphicsQuality = setting.value;
                 this.gameInstance.applyGraphicsQuality();
-                console.log('🎨 Graphics quality changed to:', setting.value);
+                 ('🎨 Graphics quality changed to:', setting.value);
                 break;
             case 'showParticles':
                 // Apply particle setting changes
@@ -939,7 +939,7 @@ export class SettingsSystem {
         // Animated glowing title
         ctx.save();
         ctx.textAlign = 'center';
-        ctx.font = 'bold 38px Courier New';
+        ctx.font = 'bold 38px "Segoe UI", Arial, sans-serif';
         ctx.shadowColor = 'rgba(88,166,255,0.5)';
         ctx.shadowBlur = 18;
         ctx.fillStyle = '#f0f6fc';
@@ -948,7 +948,7 @@ export class SettingsSystem {
         ctx.shadowBlur = 32;
         ctx.fillText('SETTINGS', width/2, 48);
         ctx.shadowBlur = 0;
-        ctx.font = '18px Courier New';
+        ctx.font = '18px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = 'rgba(125,133,144,0.85)';
         ctx.fillText('Configure your game experience', width/2, 75);
         ctx.restore();
@@ -1083,13 +1083,13 @@ export class SettingsSystem {
             }
             
             // Icon
-            ctx.font = '20px Courier New';
+            ctx.font = '20px "Segoe UI", Arial, sans-serif';
             ctx.fillStyle = isSelected ? tab.color : '#8b949e';
             ctx.textAlign = 'left';
             ctx.fillText(tab.icon, tabX + 15, y + 32);
             
             // Text
-            ctx.font = isSelected ? 'bold 14px Courier New' : '14px Courier New';
+            ctx.font = isSelected ? 'bold 14px "Segoe UI", Arial, sans-serif' : '14px "Segoe UI", Arial, sans-serif';
             ctx.fillStyle = isSelected ? '#f0f6fc' : '#8b949e';
             ctx.fillText(tab.name, tabX + 45, y + 32);
             ctx.restore();
@@ -1146,14 +1146,14 @@ export class SettingsSystem {
         
         // Section title
         ctx.save();
-        ctx.font = 'bold 24px Courier New';
+        ctx.font = 'bold 24px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#10b981';
         ctx.textAlign = 'left';
         ctx.shadowColor = '#10b981';
         ctx.shadowBlur = 8;
         ctx.fillText('🔊 Audio', panelX + 30, panelY + 40 - this.scrollOffset);
         ctx.shadowBlur = 0;
-        ctx.font = '14px Courier New';
+        ctx.font = '14px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#8b949e';
         ctx.fillText('Sound and music settings', panelX + 30, panelY + 65 - this.scrollOffset);
         ctx.restore();
@@ -1194,14 +1194,14 @@ export class SettingsSystem {
         
         // Section title
         ctx.save();
-        ctx.font = 'bold 24px Courier New';
+        ctx.font = 'bold 24px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#3b82f6';
         ctx.textAlign = 'left';
         ctx.shadowColor = '#3b82f6';
         ctx.shadowBlur = 8;
         ctx.fillText('🎮 Gameplay', panelX + 30, panelY + 40 - this.scrollOffset);
         ctx.shadowBlur = 0;
-        ctx.font = '14px Courier New';
+        ctx.font = '14px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#8b949e';
         ctx.fillText('Game behavior and controls', panelX + 30, panelY + 65 - this.scrollOffset);
         ctx.restore();
@@ -1242,14 +1242,14 @@ export class SettingsSystem {
         
         // Section title
         ctx.save();
-        ctx.font = 'bold 24px Courier New';
+        ctx.font = 'bold 24px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#8b5cf6';
         ctx.textAlign = 'left';
         ctx.shadowColor = '#8b5cf6';
         ctx.shadowBlur = 8;
         ctx.fillText('🖥️ Graphics', panelX + 30, panelY + 40 - this.scrollOffset);
         ctx.shadowBlur = 0;
-        ctx.font = '14px Courier New';
+        ctx.font = '14px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#8b949e';
         ctx.fillText('Visual quality and performance', panelX + 30, panelY + 65 - this.scrollOffset);
         ctx.restore();
@@ -1294,13 +1294,13 @@ export class SettingsSystem {
         }
         
         // Icon
-        ctx.font = '18px Courier New';
+        ctx.font = '18px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = isHovered ? '#ef4444' : '#8b949e';
         ctx.textAlign = 'left';
         ctx.fillText('⬅️', buttonX + 15, buttonY + 28);
         
         // Text
-        ctx.font = 'bold 14px Courier New';
+        ctx.font = 'bold 14px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = isHovered ? '#f0f6fc' : '#8b949e';
         ctx.fillText('Back', buttonX + 45, buttonY + 28);
         ctx.restore();
@@ -1473,14 +1473,14 @@ export class SettingsSystem {
         
         // Section title
         ctx.save();
-        ctx.font = 'bold 24px Courier New';
+        ctx.font = 'bold 24px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#f59e0b';
         ctx.textAlign = 'left';
         ctx.shadowColor = '#f59e0b';
         ctx.shadowBlur = 8;
         ctx.fillText('💾 Data', panelX + 30, panelY + 40 - this.scrollOffset);
         ctx.shadowBlur = 0;
-        ctx.font = '14px Courier New';
+        ctx.font = '14px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#8b949e';
         ctx.fillText('Save data and privacy settings', panelX + 30, panelY + 65 - this.scrollOffset);
         ctx.restore();
@@ -1555,14 +1555,14 @@ export class SettingsSystem {
         
         // Label
         ctx.save();
-        ctx.font = '16px Courier New';
+        ctx.font = '16px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#f0f6fc';
         ctx.textAlign = 'left';
         ctx.fillText(label, x + 20, y + height / 2 + 5);
         
         // Value display
         const displayValue = Math.round(value * 100) + '%';
-        ctx.font = '14px Courier New';
+        ctx.font = '14px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#8b949e';
         ctx.textAlign = 'right';
         ctx.fillText(displayValue, x + width - 20, y + height / 2 + 5);
@@ -1621,7 +1621,7 @@ export class SettingsSystem {
         
         // Label
         ctx.save();
-        ctx.font = '16px Courier New';
+        ctx.font = '16px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#f0f6fc';
         ctx.textAlign = 'left';
         ctx.fillText(label, x + 20, y + height / 2 + 5);
@@ -1673,7 +1673,7 @@ export class SettingsSystem {
         
         // Label
         ctx.save();
-        ctx.font = '16px Courier New';
+        ctx.font = '16px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#f0f6fc';
         ctx.textAlign = 'left';
         ctx.fillText(label, x + 20, y + height / 2 + 5);
@@ -1687,13 +1687,13 @@ export class SettingsSystem {
         const currentOption = options.find(opt => opt.value === value);
         const displayText = currentOption ? currentOption.label : value;
         
-        ctx.font = '14px Courier New';
+        ctx.font = '14px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#f0f6fc';
         ctx.textAlign = 'left';
         ctx.fillText(displayText, dropdownX + 15, dropdownY + dropdownHeight / 2 + 5);
         
         // Dropdown arrow
-        ctx.font = '12px Courier New';
+        ctx.font = '12px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = 'rgba(255,255,255,0.6)';
         ctx.textAlign = 'center';
         ctx.fillText(isExpanded ? '▲' : '▼', dropdownX + dropdownWidth - 15, dropdownY + dropdownHeight / 2 + 4);
@@ -1734,7 +1734,7 @@ export class SettingsSystem {
                 
                 // Option text
                 ctx.save();
-                ctx.font = isCurrentOption ? 'bold 14px Courier New' : '14px Courier New';
+                ctx.font = isCurrentOption ? 'bold 14px "Segoe UI", Arial, sans-serif' : '14px "Segoe UI", Arial, sans-serif';
                 ctx.fillStyle = isCurrentOption ? '#22c55e' : '#f0f6fc';
                 ctx.textAlign = 'left';
                 ctx.fillText(option.label, dropdownX + 15, optionY + optionHeight / 2 + 5);
@@ -1770,7 +1770,7 @@ export class SettingsSystem {
         
         // Label
         ctx.save();
-        ctx.font = '16px Courier New';
+        ctx.font = '16px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#f0f6fc';
         ctx.textAlign = 'left';
         ctx.fillText(label, x + 20, y + height / 2 + 5);
@@ -1790,7 +1790,7 @@ export class SettingsSystem {
         this.drawGlassmorphicPanel(ctx, buttonX, buttonY, buttonWidth, buttonHeight, buttonBgColor, buttonBorderColor);
         
         // Button text
-        ctx.font = 'bold 14px Courier New';
+        ctx.font = 'bold 14px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = buttonTextColor;
         ctx.textAlign = 'center';
         if (isHovered && dangerous) {
@@ -1919,7 +1919,7 @@ export class SettingsSystem {
      * Handle slider value changes
      */
     handleSliderChange(key, value) {
-        console.log('🎛️ Settings slider change:', key, value);
+         ('🎛️ Settings slider change:', key, value);
         
         // Update the setting value first
         this.setSettingValue(key, value);
@@ -1968,14 +1968,14 @@ export class SettingsSystem {
             }
         }
         
-        console.log('✅ Setting applied:', key, value);
+         ('✅ Setting applied:', key, value);
     }
 
     /**
      * Handle toggle changes
      */
     handleToggleChange(key) {
-        console.log('🔄 Settings toggle change:', key);
+         ('🔄 Settings toggle change:', key);
         
         // Get current value and toggle it
         const currentValue = this.getSettingValue(key);
@@ -2055,7 +2055,7 @@ export class SettingsSystem {
             }
         }
         
-        console.log('✅ Toggle setting applied:', key, newValue);
+         ('✅ Toggle setting applied:', key, newValue);
     }
 
     /**
@@ -2073,7 +2073,7 @@ export class SettingsSystem {
      * Handle dropdown value changes
      */
     handleDropdownChange(key, value) {
-        console.log('📝 Settings dropdown change:', key, value);
+         ('📝 Settings dropdown change:', key, value);
         
         // Update the setting value
         this.setSettingValue(key, value);
@@ -2104,14 +2104,14 @@ export class SettingsSystem {
             }
         }
         
-        console.log('✅ Dropdown setting applied:', key, value);
+         ('✅ Dropdown setting applied:', key, value);
     }
 
     /**
      * Handle track selection
      */
     handleTrackSelection(trackFilename) {
-        console.log('🎵 Track selected:', trackFilename);
+         ('🎵 Track selected:', trackFilename);
         this.handleDropdownChange('musicTrack', trackFilename);
         this.expandedDropdown = null; // Close dropdown after selection
     }
@@ -2120,7 +2120,7 @@ export class SettingsSystem {
      * Handle button actions
      */
     handleButtonAction(key) {
-        console.log('🔘 Button action:', key);
+         ('🔘 Button action:', key);
         
         switch (key) {
             case 'exportSaveData':
@@ -2159,9 +2159,9 @@ export class SettingsSystem {
             link.click();
             
             URL.revokeObjectURL(url);
-            console.log('✅ Save data exported successfully');
+             ('✅ Save data exported successfully');
         } catch (error) {
-            console.error('❌ Failed to export save data:', error);
+            // ❌ Failed to export save data (log removed)
         }
     }
 
@@ -2190,10 +2190,10 @@ export class SettingsSystem {
                             this.gameInstance.saveSystem.importData(saveData.gameData);
                         }
                         
-                        console.log('✅ Save data imported successfully');
+                         ('✅ Save data imported successfully');
                         this.showImportSuccessMessage();
                     } catch (error) {
-                        console.error('❌ Failed to import save data:', error);
+                        // ❌ Failed to import save data (log removed)
                         this.showImportErrorMessage();
                     }
                 };
@@ -2222,10 +2222,10 @@ export class SettingsSystem {
                     localStorage.removeItem('coderunner_settings');
                     localStorage.removeItem('coderunner_save');
                     
-                    console.log('✅ All progress reset successfully');
+                     ('✅ All progress reset successfully');
                     this.showResetSuccessMessage();
                 } catch (error) {
-                    console.error('❌ Failed to reset progress:', error);
+                    // ❌ Failed to reset progress (log removed)
                 }
             }
         }
@@ -2311,7 +2311,7 @@ export class SettingsSystem {
      */
     showImportSuccessMessage() {
         // You can implement a toast or notification system here
-        console.log('📥 Import successful!');
+         ('📥 Import successful!');
     }
 
     /**
@@ -2319,7 +2319,7 @@ export class SettingsSystem {
      */
     showImportErrorMessage() {
         // You can implement a toast or notification system here
-        console.error('📥 Import failed!');
+    // 📥 Import failed! (log removed)
     }
 
     /**
@@ -2327,7 +2327,7 @@ export class SettingsSystem {
      */
     showResetSuccessMessage() {
         // You can implement a toast or notification system here
-        console.log('🔄 Reset successful!');
+         ('🔄 Reset successful!');
     }
 
     /**
@@ -2873,7 +2873,7 @@ export class SettingsSystem {
      * Enhanced click handling with support for all new features
      */
     handleClick(x, y, hitAreas) {
-        console.log('🎯 SettingsSystem handleClick called with:', {
+         ('🎯 SettingsSystem handleClick called with:', {
             x, y, 
             hitAreasCount: hitAreas.length,
             hitAreas: hitAreas.map(area => ({
@@ -2890,7 +2890,7 @@ export class SettingsSystem {
             if (x >= area.x && x <= area.x + area.width && 
                 y >= area.y && y <= area.y + area.height) {
                 
-                console.log('🎯 Hit area found:', area);
+                 ('🎯 Hit area found:', area);
                 
                 if (this.gameInstance?.audioSystem) {
                     this.gameInstance.audioSystem.onMenuClick();
@@ -2907,7 +2907,7 @@ export class SettingsSystem {
                 
                 // Handle back button
                 if (area.action === 'back') {
-                    console.log('🔙 Settings back button clicked');
+                     ('🔙 Settings back button clicked');
                     return 'back';
                 }
                 
@@ -2916,35 +2916,35 @@ export class SettingsSystem {
                     const sliderWidth = area.width;
                     const progress = Math.max(0, Math.min(1, (x - area.x) / sliderWidth));
                     const newValue = area.min + progress * (area.max - area.min);
-                    console.log('🎛️ Slider interaction:', area.key, newValue);
+                     ('🎛️ Slider interaction:', area.key, newValue);
                     this.handleSliderChange(area.key, newValue);
                     return null;
                 }
                 
                 // Handle toggle interactions
                 if (area.action === 'toggle') {
-                    console.log('🔄 Toggle interaction:', area.key);
+                     ('🔄 Toggle interaction:', area.key);
                     this.handleToggleChange(area.key);
                     return null;
                 }
                 
                 // Handle dropdown interactions
                 if (area.action === 'dropdown') {
-                    console.log('▼ Dropdown interaction:', area.key);
+                     ('▼ Dropdown interaction:', area.key);
                     this.expandedDropdown = this.expandedDropdown === area.key ? null : area.key;
                     return null;
                 }
                 
                 // Handle dropdown option selection
                 if (area.action === 'selectTrack') {
-                    console.log('✅ Track selected:', area.trackFilename);
+                     ('✅ Track selected:', area.trackFilename);
                     this.handleTrackSelection(area.trackFilename);
                     return null;
                 }
                 
                 // Handle dropdown option selection (legacy)
                 if (area.action === 'dropdown-option') {
-                    console.log('✅ Dropdown option selected:', area.key, area.value);
+                     ('✅ Dropdown option selected:', area.key, area.value);
                     this.handleDropdownChange(area.key, area.value);
                     this.expandedDropdown = null; // Close dropdown
                     return null;
@@ -2952,7 +2952,7 @@ export class SettingsSystem {
                 
                 // Handle button actions
                 if (area.action === 'button') {
-                    console.log('🔘 Button clicked:', area.key);
+                     ('🔘 Button clicked:', area.key);
                     this.handleButtonAction(area.key);
                     return null;
                 }
@@ -3109,7 +3109,7 @@ export class SettingsSystem {
             this.lastActiveTab = this.activeTab;
         }
         
-        console.log('📜 Scroll:', { deltaY, scrollAmount, targetOffset: this.targetScrollOffset, maxScroll });
+         ('📜 Scroll:', { deltaY, scrollAmount, targetOffset: this.targetScrollOffset, maxScroll });
     }
 
     /**
@@ -3144,7 +3144,7 @@ export class SettingsSystem {
         
         // Label with icon
         ctx.save();
-        ctx.font = '16px Courier New';
+        ctx.font = '16px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#f0f6fc';
         ctx.textAlign = 'left';
         ctx.fillText('🎵 Music Track', x + 20, y + height / 2 + 5);
@@ -3180,14 +3180,14 @@ export class SettingsSystem {
             ctx.fillStyle = '#22c55e';
             ctx.shadowColor = '#22c55e';
             ctx.shadowBlur = 6;
-            ctx.font = '14px Courier New';
+            ctx.font = '14px "Segoe UI", Arial, sans-serif';
             ctx.textAlign = 'left';
             ctx.fillText('♪', dropdownX + 12, dropdownY + dropdownHeight / 2 + 5);
             ctx.shadowBlur = 0;
         }
         
         // Dropdown text with better styling
-        ctx.font = currentTrack ? 'bold 14px Courier New' : '14px Courier New';
+        ctx.font = currentTrack ? 'bold 14px "Segoe UI", Arial, sans-serif' : '14px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = currentTrack ? '#f0f6fc' : '#8b949e';
         ctx.textAlign = 'left';
         
@@ -3198,7 +3198,7 @@ export class SettingsSystem {
         ctx.fillText(truncatedText, dropdownX + (currentTrack ? 30 : 15), dropdownY + dropdownHeight / 2 + 5);
         
         // Enhanced dropdown arrow with animation
-        ctx.font = '16px Courier New';
+        ctx.font = '16px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = isExpanded ? '#58a6ff' : '#8b949e';
         ctx.textAlign = 'right';
         
@@ -3291,14 +3291,14 @@ export class SettingsSystem {
                 ctx.fillStyle = '#22c55e';
                 ctx.shadowColor = '#22c55e';
                 ctx.shadowBlur = 12;
-                ctx.font = 'bold 16px Courier New';
+                ctx.font = 'bold 16px "Segoe UI", Arial, sans-serif';
                 ctx.textAlign = 'left';
                 ctx.fillText('♪', x + 15, itemY + itemHeight / 2 + 5);
                 ctx.shadowBlur = 0;
             }
             
             // Track name with enhanced styling
-            ctx.font = isCurrent ? 'bold 15px Courier New' : '15px Courier New';
+            ctx.font = isCurrent ? 'bold 15px "Segoe UI", Arial, sans-serif' : '15px "Segoe UI", Arial, sans-serif';
             ctx.fillStyle = isCurrent ? '#22c55e' : isHovered ? '#f0f6fc' : '#d0d7de';
             ctx.textAlign = 'left';
             
@@ -3312,7 +3312,7 @@ export class SettingsSystem {
             ctx.shadowBlur = 0;
             
             // Track description with better styling
-            ctx.font = '12px Courier New';
+            ctx.font = '12px "Segoe UI", Arial, sans-serif';
             ctx.fillStyle = isCurrent ? 'rgba(34, 197, 94, 0.8)' : 'rgba(139, 148, 158, 0.9)';
             ctx.fillText(track.description, x + (isCurrent ? 35 : 18), itemY + itemHeight / 2 + 14);
             
@@ -3396,12 +3396,12 @@ export class SettingsSystem {
         });
         
         if (discrepancies.length > 0) {
-            console.log('⚠️ Settings discrepancies detected (cloud will take precedence):');
+             ('⚠️ Settings discrepancies detected (cloud will take precedence):');
             discrepancies.forEach(disc => {
-                console.log(`  ${disc.setting}: local="${disc.local}" vs cloud="${disc.cloud}"`);
+                 (`  ${disc.setting}: local="${disc.local}" vs cloud="${disc.cloud}"`);
             });
         } else {
-            console.log('✅ Local and cloud settings are in sync');
+             ('✅ Local and cloud settings are in sync');
         }
         
         return discrepancies;

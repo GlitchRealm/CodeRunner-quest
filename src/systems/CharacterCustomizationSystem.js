@@ -143,7 +143,7 @@ export class CharacterCustomizationSystem {
             const index = this.availableSprites.findIndex(sprite => sprite.id === currentSprite);
             if (index !== -1) {
                 this.selectedSpriteIndex = index;
-                console.log(`🎭 Loaded current sprite selection: ${currentSprite} (index: ${index})`);
+                 (`🎭 Loaded current sprite selection: ${currentSprite} (index: ${index})`);
             }
         }
         
@@ -173,7 +173,7 @@ export class CharacterCustomizationSystem {
                         const unlockedAchievements = this.game.achievementSystem.unlockedAchievements.size;
                         sprite.unlocked = (unlockedAchievements >= totalAchievements);
                         
-                        console.log(`🏆 King Runner unlock check: ${unlockedAchievements}/${totalAchievements} achievements`);
+                         (`🏆 King Runner unlock check: ${unlockedAchievements}/${totalAchievements} achievements`);
                     }
                 }
                 // Free and default sprites are always unlocked
@@ -794,7 +794,7 @@ export class CharacterCustomizationSystem {
         
         if (x >= backButton.x && x <= backButton.x + backButton.width && 
             y >= backButton.y && y <= backButton.y + backButton.height) {
-            console.log('Back button clicked in character customization');
+             ('Back button clicked in character customization');
             // Navigate back to previous state
             if (this.game) {
                 const backState = this.game.previousGameState || 'home';
@@ -805,10 +805,10 @@ export class CharacterCustomizationSystem {
         
         // Only check sprites if click is NOT in button area
         if (y < buttonY - 10) { // 10px buffer above buttons
-            console.log('🎮 Checking sprite selection...');
+             ('🎮 Checking sprite selection...');
             return this.handleSpriteClick(x, y, width, height);
         } else {
-            console.log('🚫 Click missed Apply button but was in button area');
+             ('🚫 Click missed Apply button but was in button area');
             return null;
         }
     }
@@ -853,10 +853,10 @@ export class CharacterCustomizationSystem {
                     const sprite = this.availableSprites[index];
                     if (sprite && sprite.unlocked) {
                         this.selectedSpriteIndex = index;
-                        console.log(`Selected sprite: ${sprite.name}`);
+                         (`Selected sprite: ${sprite.name}`);
                         return 'spriteSelected';
                     } else if (sprite) {
-                        console.log(`Sprite "${sprite.name}" is locked`);
+                         (`Sprite "${sprite.name}" is locked`);
                     }
                 }
             }
@@ -872,7 +872,7 @@ export class CharacterCustomizationSystem {
         const selectedSprite = this.availableSprites[this.selectedSpriteIndex];
         
         if (selectedSprite && selectedSprite.unlocked) {
-            console.log(`🎭 Applying sprite: ${selectedSprite.name} (${selectedSprite.id})`);
+             (`🎭 Applying sprite: ${selectedSprite.name} (${selectedSprite.id})`);
             
             // Update profile manager if available
             if (typeof window !== 'undefined' && window.profileManager) {
@@ -884,12 +884,12 @@ export class CharacterCustomizationSystem {
                     window.profileManager.refreshSpriteSelector();
                 }
                 
-                console.log(`✨ Applied character sprite via ProfileManager: ${selectedSprite.name}`);
+                 (`✨ Applied character sprite via ProfileManager: ${selectedSprite.name}`);
             } else {
                 // Fallback: save directly to localStorage
                 try {
                     localStorage.setItem('coderunner_selected_sprite', selectedSprite.id);
-                    console.log(`✨ Applied character sprite via localStorage: ${selectedSprite.name}`);
+                     (`✨ Applied character sprite via localStorage: ${selectedSprite.name}`);
                 } catch (error) {
                     console.warn('⚠️ Failed to save sprite selection:', error);
                 }
@@ -898,12 +898,12 @@ export class CharacterCustomizationSystem {
             // Update player sprite immediately if available
             if (this.game.player && this.game.player.loadSelectedSprite) {
                 this.game.player.loadSelectedSprite();
-                console.log('🎮 Player sprite updated immediately');
+                 ('🎮 Player sprite updated immediately');
             }
             
             // Also update any future game instances by forcing a global refresh
             if (typeof window !== 'undefined' && window.game && window.game.player) {
-                console.log('🔄 Force updating current game player sprite');
+                 ('🔄 Force updating current game player sprite');
                 window.game.player.loadSelectedSprite();
             }
             
@@ -921,7 +921,7 @@ export class CharacterCustomizationSystem {
                     spritePath = `./assets/${selectedSprite.id}`;
                 }
                 
-                console.log(`🎭 Force changing sprite to: ${spritePath}`);
+                 (`🎭 Force changing sprite to: ${spritePath}`);
                 this.game.player.changeSprite(spritePath);
             }
             
@@ -932,9 +932,9 @@ export class CharacterCustomizationSystem {
             
             return 'applied';
         } else {
-            console.log('❌ Cannot apply sprite - not selected or not unlocked');
+             ('❌ Cannot apply sprite - not selected or not unlocked');
             if (selectedSprite) {
-                console.log(`Sprite details: ${selectedSprite.name}, unlocked: ${selectedSprite.unlocked}`);
+                 (`Sprite details: ${selectedSprite.name}, unlocked: ${selectedSprite.unlocked}`);
             }
         }
         return null;
@@ -952,7 +952,7 @@ export class CharacterCustomizationSystem {
         const scrollSpeed = 0.8; // Adjust this value to change scroll sensitivity
         this.scrollOffset = Math.max(0, Math.min(this.scrollOffset + deltaY * scrollSpeed, maxScrollOffset));
         
-        console.log(`🎭 Scroll offset: ${this.scrollOffset.toFixed(0)}/${maxScrollOffset.toFixed(0)}`);
+         (`🎭 Scroll offset: ${this.scrollOffset.toFixed(0)}/${maxScrollOffset.toFixed(0)}`);
     }
     
     /**
@@ -1062,7 +1062,7 @@ export class CharacterCustomizationSystem {
      */
     debugKingRunnerStatus() {
         if (!this.game.achievementSystem) {
-            console.log('❌ Achievement system not available');
+             ('❌ Achievement system not available');
             return;
         }
         
@@ -1072,16 +1072,16 @@ export class CharacterCustomizationSystem {
         
         const kingRunner = this.availableSprites.find(sprite => sprite.id === 'Untitled design (14).png');
         
-        console.log('👑 KING RUNNER STATUS:');
-        console.log(`🏆 Achievements: ${unlockedAchievements}/${totalAchievements} (${percentage}%)`);
-        console.log(`🔓 King Runner Unlocked: ${kingRunner ? kingRunner.unlocked : 'NOT FOUND'}`);
-        console.log(`📊 Required: 100% achievements (${totalAchievements}/${totalAchievements})`);
+         ('👑 KING RUNNER STATUS:');
+         (`🏆 Achievements: ${unlockedAchievements}/${totalAchievements} (${percentage}%)`);
+         (`🔓 King Runner Unlocked: ${kingRunner ? kingRunner.unlocked : 'NOT FOUND'}`);
+         (`📊 Required: 100% achievements (${totalAchievements}/${totalAchievements})`);
         
         if (unlockedAchievements >= totalAchievements) {
-            console.log('🎉 KING RUNNER SHOULD BE UNLOCKED!');
+             ('🎉 KING RUNNER SHOULD BE UNLOCKED!');
         } else {
             const remaining = totalAchievements - unlockedAchievements;
-            console.log(`⏳ Need ${remaining} more achievement${remaining !== 1 ? 's' : ''} to unlock King Runner`);
+             (`⏳ Need ${remaining} more achievement${remaining !== 1 ? 's' : ''} to unlock King Runner`);
         }
         
         return {

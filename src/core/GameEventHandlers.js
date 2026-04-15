@@ -107,7 +107,7 @@ export class GameEventHandlers {
         const x = (e.clientX - rect.left) * scaleX;
         const y = (e.clientY - rect.top) * scaleY;
 
-        console.log(`🖱️ Canvas click: (${Math.round(x)}, ${Math.round(y)}) in state: ${this.game.gameState}`);
+         (`🖱️ Canvas click: (${Math.round(x)}, ${Math.round(y)}) in state: ${this.game.gameState}`);
 
         // Check for popup clicks first (popups should work in any state)
         if (this.game.popupSystem && this.game.popupSystem.activePopup) {
@@ -135,14 +135,6 @@ export class GameEventHandlers {
                 if (this.game.tutorialSystem) {
                     this.game.tutorialSystem.handleClick({ clientX: e.clientX, clientY: e.clientY });
                 }
-                break;
-                  
-            case GAME_STATES.PROFILE:
-                // Handle profile system clicks (delegate to profile system)
-                // TODO: Re-enable when UserProfileSystem is implemented
-                // if (this.game.userProfileSystem) {
-                //     this.game.userProfileSystem.handleClick(x, y);
-                // }
                 break;
                 
             case GAME_STATES.POST_ANIMATION_POPUP:
@@ -223,53 +215,24 @@ export class GameEventHandlers {
                 this.game.togglePause();
                 break;
                 
-            case GAME_STATES.SETTINGS:
-            case GAME_STATES.OPTIONS:
-            case GAME_STATES.CREDITS:
-            case GAME_STATES.ACHIEVEMENTS:
-            case GAME_STATES.LEADERBOARD:
-            case GAME_STATES.SHOP:
-            case GAME_STATES.DIFFICULTY_SELECT:
-            case GAME_STATES.CHARACTER_CUSTOMIZATION:
-            case GAME_STATES.CHANGELOG:
-            case GAME_STATES.TUTORIAL:
-                // Use the new navigation history system
-                const didNavigateBack = this.game.navigation.navigateBack();
-                if (!didNavigateBack) {
-                    // Fallback to home if navigation back failed
-                    console.log(`🔙 Navigation back failed, going to HOME`);
-                    this.game.navigateToState(GAME_STATES.HOME);
-                }
-                break;
-                
             case GAME_STATES.PAUSED:
                 // Resume game
                 this.game.togglePause();
                 break;
                 
-            case GAME_STATES.GAME_OVER:
-                // Go to home screen
-                this.game.navigateToState(GAME_STATES.HOME);
-                break;
-                
-            case GAME_STATES.POST_ANIMATION_POPUP:
-                // Close popup and go to home
-                this.game.gameState = GAME_STATES.HOME;
-                break;
-                
             case GAME_STATES.HOME:
                 // Don't do anything when already at home screen
-                console.log(`🏠 Already at home screen, ignoring escape`);
-                break;
-                
-            case GAME_STATES.PROFILE:
-                // Go back to home from profile
-                this.game.navigateToState(GAME_STATES.HOME);
+                 (`🏠 Already at home screen, ignoring escape`);
                 break;
                 
             default:
-                // For other states, try to go to home
-                if (this.game.gameState !== GAME_STATES.HOME && this.game.gameState !== GAME_STATES.PLAYING) {
+                // For any non-home non-gameplay state, go to previous screen first.
+                const didNavigateBack = this.game.navigation && typeof this.game.navigation.navigateBack === 'function'
+                    ? this.game.navigation.navigateBack()
+                    : false;
+
+                // Main menu is the last stop if there is no history left.
+                if (!didNavigateBack && this.game.gameState !== GAME_STATES.HOME && this.game.gameState !== GAME_STATES.PLAYING) {
                     this.game.navigateToState(GAME_STATES.HOME);
                 }
                 break;
@@ -439,20 +402,20 @@ export class GameEventHandlers {
     }
 
     handleDifficultyClick(x, y) {
-        console.log('🎯 Difficulty click at:', x, y);
-        console.log('🎯 Hit areas:', this.game.difficultyHitAreas);
+         ('🎯 Difficulty click at:', x, y);
+         ('🎯 Hit areas:', this.game.difficultyHitAreas);
         
         if (!this.game.difficultyHitAreas) return;
         
         // Check if any difficulty button was clicked
         for (let i = 0; i < this.game.difficultyHitAreas.length; i++) {
             const area = this.game.difficultyHitAreas[i];
-            console.log(`🎯 Checking area ${i}:`, area);
+             (`🎯 Checking area ${i}:`, area);
             
             if (x >= area.x && x <= area.x + area.width && 
                 y >= area.y && y <= area.y + area.height) {
                 
-                console.log(`✅ Hit detected on area ${i}:`, area);
+                 (`✅ Hit detected on area ${i}:`, area);
                 
                 // Play menu click sound
                 if (this.game.audioSystem) {
@@ -461,14 +424,14 @@ export class GameEventHandlers {
 
                 // Handle different button actions
                 if (area.action === 'back') {
-                    console.log('🔙 Back button clicked');
+                     ('🔙 Back button clicked');
                     this.game.navigateToState(GAME_STATES.HOME);
                 } else if (area.action === 'difficulty') {
-                    console.log(`🎮 Difficulty selected: ${area.difficulty}`);
+                     (`🎮 Difficulty selected: ${area.difficulty}`);
                     this.game.selectedDifficulty = area.difficulty;
                     this.game.startGame(); // This will handle async
                 } else if (area.action === 'adaptive-toggle') {
-                    console.log('🔄 Adaptive difficulty toggled');
+                     ('🔄 Adaptive difficulty toggled');
                     this.game.adaptiveDifficulty = !this.game.adaptiveDifficulty;
                 }
                 
@@ -528,13 +491,13 @@ export class GameEventHandlers {
     }
 
     handleSettingsClick(x, y) {
-        console.log('🎯 Settings click at:', x, y);
+         ('🎯 Settings click at:', x, y);
         if (this.game.settingsSystem && this.game.settingsHitAreas) {
             const action = this.game.settingsSystem.handleClick(x, y, this.game.settingsHitAreas);
-            console.log('⚡ Settings action:', action);
+             ('⚡ Settings action:', action);
             
             if (action === 'back') {
-                console.log('🏠 Navigating back to OPTIONS');
+                 ('🏠 Navigating back to OPTIONS');
                 this.game.navigateToState(GAME_STATES.OPTIONS);
             }
         }
@@ -577,14 +540,14 @@ export class GameEventHandlers {
     }
 
     handleShopClick(x, y) {
-        console.log(`🛒 Shop click handler called: (${Math.round(x)}, ${Math.round(y)})`);
+         (`🛒 Shop click handler called: (${Math.round(x)}, ${Math.round(y)})`);
         // This would be handled by the game dialogs system
         if (this.game.gameDialogs) {
-            console.log('🛒 Calling gameDialogs.handleShopClick');
+             ('🛒 Calling gameDialogs.handleShopClick');
             const result = this.game.gameDialogs.handleShopClick(x, y);
-            console.log('🛒 Shop click result:', result);
+             ('🛒 Shop click result:', result);
         } else {
-            console.log('❌ gameDialogs not available');
+             ('❌ gameDialogs not available');
         }
     }
 
@@ -603,15 +566,15 @@ export class GameEventHandlers {
     }
 
     handleCharacterCustomizationClick(x, y) {
-        console.log('🖱️ Character customization click:', x, y);
+         ('🖱️ Character customization click:', x, y);
         // This would be handled by the character customization system
         if (this.game.characterCustomizationSystem) {
-            console.log('📞 Calling characterCustomizationSystem.handleClick');
+             ('📞 Calling characterCustomizationSystem.handleClick');
             const result = this.game.characterCustomizationSystem.handleClick(x, y);
-            console.log('🔄 handleClick result:', result);
+             ('🔄 handleClick result:', result);
             return result;
         } else {
-            console.log('❌ characterCustomizationSystem not found');
+             ('❌ characterCustomizationSystem not found');
         }
     }
 

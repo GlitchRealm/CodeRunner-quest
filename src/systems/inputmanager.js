@@ -67,51 +67,36 @@ export class InputManager {
         document.addEventListener('keyup', (e) => this.handleKeyUp(e));
         
         // Handle text input for name entry
-        document.addEventListener('keypress', (e) => this.handleKeyPress(e));        // Prevent default behavior for game keys, but not when in name input mode
-        document.addEventListener('keydown', (e) => {
-            const isInNameInput = this.isNameInputActive && this.isNameInputActive();
-            const isTypingInField = this.isTypingInInputField();
-            
-            // ALWAYS prevent arrow key scrolling for the game, even if focus is lost
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
-                e.preventDefault();
-               
-            }
-            
-            // DEBUG: Log input state checks
-            if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(e.code)) {
-              
-            }
-            
-            // Only prevent default for other keys if not in name input mode AND not typing in any input field
-            if (!isInNameInput && !isTypingInField) {
-                // Get all keybinds and check if this key is bound to any action
-                if (window.keybindManager) {
-                    const actions = window.keybindManager.getActionsForKey(e.code);
-                    if (actions.length > 0 && !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
-                      
-                        e.preventDefault();
-                    }
-                } else {
-                    // Fallback to hardcoded keys if keybind manager not available
-                    if (['Space', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyU', 'KeyC', 'KeyL', 'KeyE', 'KeyF', 'KeyQ', 'KeyX', 'ShiftLeft', 'ShiftRight'].includes(e.code)) {
-                       
-                        e.preventDefault();
-                    }
-                }
-            } else {
-                if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(e.code)) {
-                  
-                }
-            }
-        });
+        document.addEventListener('keypress', (e) => this.handleKeyPress(e));
     }    handleKeyDown(e) {
         // If we're in name input mode or typing in any input field, only handle special keys
         const isInNameInput = this.isNameInputActive && this.isNameInputActive();
         const isTypingInField = this.isTypingInInputField();
+
+        // Always allow Escape to trigger back/skip navigation when not typing.
+        if (!isInNameInput && !isTypingInField && e.code === 'Escape' && this.callbacks.skip) {
+            this.callbacks.skip();
+            return;
+        }
         
         // Get actions for this key from keybind manager
         const actions = window.keybindManager ? window.keybindManager.getActionsForKey(e.code) : [];
+
+        // Always prevent browser scrolling with arrow keys while game listeners are active.
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+            e.preventDefault();
+        }
+
+        // Prevent default for bound gameplay keys when not typing in an input field.
+        if (!isInNameInput && !isTypingInField) {
+            if (window.keybindManager) {
+                if (actions.length > 0 && !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+                    e.preventDefault();
+                }
+            } else if (['Space', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyU', 'KeyC', 'KeyL', 'KeyE', 'KeyF', 'KeyQ', 'KeyX', 'ShiftLeft', 'ShiftRight'].includes(e.code)) {
+                e.preventDefault();
+            }
+        }
         
         // DEBUG: Log key detection for movement keys
         if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) {

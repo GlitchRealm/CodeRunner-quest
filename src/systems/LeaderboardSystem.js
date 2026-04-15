@@ -82,10 +82,10 @@ export class LeaderboardSystem {
         this.setupNetworkListeners();
         
         if (this.isOnline) {
-            console.log('🌐 Connected to Firebase leaderboard');
+             ('Connected to Firebase leaderboard');
             await this.loadFirebaseLeaderboards();
         } else {
-            console.log('💾 Using offline leaderboard mode');
+             ('Using offline leaderboard mode');
             this.clearFakeSubmissions();
             this.loadLeaderboards();
         }
@@ -111,17 +111,17 @@ export class LeaderboardSystem {
                 const hasConnection = await this.checkNetworkConnectivity();
                 this.isOnline = hasConnection;
                 if (hasConnection) {
-                    console.log('Firebase database connected with network');
+                     ('Firebase database connected with network');
                 } else {
-                    console.log('Firebase available but no network connection');
+                     ('Firebase available but no network connection');
                 }
             } else {
                 this.isOnline = false;
-                console.log('Firebase not available, using offline mode');
+                 ('Firebase not available, using offline mode');
             }
         } catch (error) {
             this.isOnline = false;
-            console.log('Firebase connection error:', error);
+             ('Firebase connection error:', error);
         }
     }    /**
      * Check for actual network connectivity
@@ -133,21 +133,20 @@ export class LeaderboardSystem {
         }
 
         try {
-            // Try to make a small request to check actual connectivity
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3000);
-            
-            const response = await fetch('https://www.google.com/favicon.ico', {
-                method: 'HEAD',
-                mode: 'no-cors',
-                cache: 'no-cache',
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
+            // Prefer Firebase-native connection state over external endpoints.
+            if (this.firebaseDatabase && typeof this.firebaseDatabase.ref === 'function') {
+                const connectedRef = this.firebaseDatabase.ref('.info/connected');
+                const snapshot = await Promise.race([
+                    connectedRef.once('value'),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('connection check timeout')), 3000))
+                ]);
+                return snapshot && snapshot.val() === true;
+            }
+
+            // Fallback to browser-level online state when Firebase handle is unavailable.
             return true;
         } catch (error) {
-            console.log('Network connectivity check failed:', error);
+             ('Network connectivity check failed:', error);
             return false;
         }
     }
@@ -156,7 +155,7 @@ export class LeaderboardSystem {
      */
     async submitScore(name, score, difficulty = this.selectedDifficulty, survivalTime = 0) {
         if (!this.isOnline || !this.firebaseDatabase) {
-            console.log('Firebase not available, using offline mode');
+             ('Firebase not available, using offline mode');
             return this.submitScoreOffline(name, score, difficulty, survivalTime);
         }        try {
             const scoresRef = this.firebaseDatabase.ref(`leaderboard/${difficulty}`);
@@ -176,11 +175,11 @@ export class LeaderboardSystem {
                     const existingScore = await this.getPlayerScoreFromFirebase(difficulty, name);
                     
                     if (existingScore && score <= existingScore) {
-                        console.log(`⚠️ Not submitting to Firebase: Existing score (${existingScore}) >= new score (${score})`);
+                         (`Not submitting to Firebase: Existing score (${existingScore}) >= new score (${score})`);
                         return false;
                     }
                     
-                    console.log(`🔄 Replacing lower score (${existingScore}) with higher score (${score}) in Firebase`);
+                     (`Replacing lower score (${existingScore}) with higher score (${score}) in Firebase`);
                     // For this update, we'll simply push the new score (Firebase doesn't easily support updating)
                 }
             }
@@ -188,7 +187,7 @@ export class LeaderboardSystem {
             // Push to Firebase
             await scoresRef.push(newScore);
             
-            console.log('✅ Score submitted to Firebase:', newScore);
+             ('Score submitted to Firebase:', newScore);
             
             // Update local tracking
             this.uploadedDifficulties.add(difficulty);
@@ -203,7 +202,7 @@ export class LeaderboardSystem {
             
             return true;
         } catch (error) {
-            console.error('❌ Firebase submit error:', error);
+            // Firebase submit error (log removed)
             // Fallback to offline
             return this.submitScoreOffline(name, score, difficulty, survivalTime);
         }
@@ -263,7 +262,7 @@ export class LeaderboardSystem {
      */
     showLeaderboard(difficulty = this.selectedDifficulty, enableLiveUpdates = true) {
         if (!this.isOnline || !this.firebaseDatabase) {
-            console.log('Firebase not available, showing offline leaderboard');
+             ('Firebase not available, showing offline leaderboard');
             this.showOfflineLeaderboard(difficulty);
             return;
         }
@@ -308,9 +307,9 @@ export class LeaderboardSystem {
                 
                 // Add medal for top 3
                 let rankDisplay = `${index + 1}.`;
-                if (index === 0) rankDisplay = '🥇';
-                else if (index === 1) rankDisplay = '🥈';
-                else if (index === 2) rankDisplay = '🥉';
+                if (index === 0) rankDisplay = '';
+                else if (index === 1) rankDisplay = '';
+                else if (index === 2) rankDisplay = '';
                   li.innerHTML = `
                     <span>${rankDisplay} ${entry.name}</span>
                     <span style="color: #ffd700;">${entry.score}</span>
@@ -374,9 +373,9 @@ export class LeaderboardSystem {
                 li.style.borderBottom = index < entries.length - 1 ? "1px solid #30363d" : "none";
                 
                 let rankDisplay = `${index + 1}.`;
-                if (index === 0) rankDisplay = '🥇';
-                else if (index === 1) rankDisplay = '🥈';
-                else if (index === 2) rankDisplay = '🥉';
+                if (index === 0) rankDisplay = '';
+                else if (index === 1) rankDisplay = '';
+                else if (index === 2) rankDisplay = '';
                   li.innerHTML = `
                     <span>${rankDisplay} ${entry.name}</span>
                     <span style="color: #ffd700;">${entry.score}</span>
@@ -413,26 +412,26 @@ export class LeaderboardSystem {
         // Calculate survival time in seconds
         const survivalTime = Math.floor((Date.now() - startTime) / 1000);
         
-        console.log(`🎯 Preparing score upload: ${score} in ${difficulty} mode (${survivalTime}s)`);
+         (`Preparing score upload: ${score} in ${difficulty} mode (${survivalTime}s)`);
         
         // Check if we have a valid display name for automatic submission
         const displayName = this.getDisplayName();
         const isAuthenticated = this.isUserAuthenticated();
         
         if (this.hasValidDisplayName()) {
-            console.log(`🚀 Auto-submitting score with display name: ${displayName}`);
+             (`Auto-submitting score with display name: ${displayName}`);
             return this.autoSubmitScore(score, difficulty, survivalTime, displayName);
         } else if (isAuthenticated && !this.hasValidDisplayName()) {
-            console.log(`📝 Authenticated user needs to set display name, showing name selection dialog`);
+             (`Authenticated user needs to set display name, showing name selection dialog`);
             return this.showNameSelectionDialog(difficulty, score, survivalTime);
         } else {
             // Check for saved name for guest users
             const savedName = this.getSavedPlayerName();
             if (savedName && savedName.trim() && savedName !== 'Anonymous') {
-                console.log(`🚀 Auto-submitting score with saved name: ${savedName}`);
+                 (`Auto-submitting score with saved name: ${savedName}`);
                 return this.autoSubmitScore(score, difficulty, survivalTime, savedName);
             } else {
-                console.log(`📝 No saved name found, showing name selection dialog`);
+                 (`No saved name found, showing name selection dialog`);
                 return this.showNameSelectionDialog(difficulty, score, survivalTime);
             }
         }
@@ -448,22 +447,22 @@ export class LeaderboardSystem {
      */
     async autoSubmitScore(score, difficulty, survivalTime, playerName) {
         if (score < 100) {
-            console.log(`❌ Score ${score} too low for leaderboard (minimum 100)`);
+             (`Score ${score} too low for leaderboard (minimum 100)`);
             return false;
         }
 
         // Validate player name for inappropriate content
         const validation = this.validatePlayerName(playerName);
         if (!validation.valid) {
-            console.warn(`❌ Saved name "${playerName}" failed validation:`, validation.message);
+            console.warn(`Saved name "${playerName}" failed validation:`, validation.message);
             // If the saved name is inappropriate, fall back to name selection dialog
             return this.showNameSelectionDialog(difficulty, score, survivalTime);
         }        // Note: Allowing same name across different difficulties
         // Players can use the same name in multiple difficulty levels
-        console.log(`✅ Using name "${playerName}" for ${difficulty} mode (same name allowed across difficulties)`);
+         (`Using name "${playerName}" for ${difficulty} mode (same name allowed across difficulties)`);
         
 
-        console.log(`🚀 Auto-submitting score: ${score} for ${playerName} in ${difficulty} mode`);
+         (`Auto-submitting score: ${score} for ${playerName} in ${difficulty} mode`);
         
         try {
             this.isUploading = true;
@@ -473,7 +472,7 @@ export class LeaderboardSystem {
                     success: true,
                     message: `Score ${score} automatically uploaded to ${DIFFICULTY_LEVELS[difficulty].name} leaderboard!`
                 });
-                console.log(`✅ Auto-submission successful: ${score} for ${playerName}`);
+                 (`Auto-submission successful: ${score} for ${playerName}`);
                 
                 // Automatically show leaderboard after successful high score submission
                 this.scheduleLeaderboardDisplay();
@@ -482,13 +481,13 @@ export class LeaderboardSystem {
                     success: false,
                     message: 'Auto-upload failed! Score not high enough or other error.'
                 });
-                console.log(`❌ Auto-submission failed for ${playerName}: ${score}`);
+                 (`Auto-submission failed for ${playerName}: ${score}`);
             }
             
             return success;
             
         } catch (error) {
-            console.error('Error during auto-submission:', error);
+            // Error during auto-submission (log removed)
             this.setUploadResult({
                 success: false,
                 message: 'Auto-upload failed! Please try again later.'
@@ -505,7 +504,7 @@ export class LeaderboardSystem {
      * @returns {boolean} - Always returns true to indicate dialog was shown
      */
     showNameSelectionDialog(difficulty, score, survivalTime) {
-        console.log(`📝 Showing name selection dialog for score: ${score} in ${difficulty} mode`);
+         (`Showing name selection dialog for score: ${score} in ${difficulty} mode`);
         
         // Set up the upload context for the manual name entry flow
         this.currentUpload = { difficulty, score, survivalTime };
@@ -530,7 +529,7 @@ export class LeaderboardSystem {
             return;
         }
 
-        console.log('🏆 Scheduling leaderboard display for new high score...');
+         ('Scheduling leaderboard display for new high score...');
         
         // Determine the difficulty to show:
         // 1. If we have a currentUpload context (manual submission), use that difficulty
@@ -542,7 +541,7 @@ export class LeaderboardSystem {
         // Show leaderboard after a 2-second delay to let player see the success message
         setTimeout(() => {
             try {
-                console.log('🏆 Automatically showing leaderboard for new high score');
+                 ('Automatically showing leaderboard for new high score');
                 
                 // Import GAME_STATES at runtime to avoid circular dependencies
                 import('../utils/constants.js').then(({ GAME_STATES }) => {
@@ -553,14 +552,14 @@ export class LeaderboardSystem {
                         // Transition to leaderboard state
                         this.gameInstance.gameState = GAME_STATES.LEADERBOARD;
                         
-                        console.log(`✅ Successfully transitioned to leaderboard display for ${highScoreDifficulty} difficulty`);
+                         (`Successfully transitioned to leaderboard display for ${highScoreDifficulty} difficulty`);
                     }
                 }).catch(error => {
-                    console.error('Error importing GAME_STATES:', error);
+                    // Error importing GAME_STATES (log removed)
                 });
                 
             } catch (error) {
-                console.error('Error showing leaderboard:', error);
+                // Error showing leaderboard (log removed)
             }        }, 2000); // 2-second delay
     }
 
@@ -575,12 +574,12 @@ export class LeaderboardSystem {
             return;
         }
 
-        console.log(`🏆 Scheduling leaderboard display for ${difficulty} difficulty...`);
+         (`Scheduling leaderboard display for ${difficulty} difficulty...`);
         
         // Show leaderboard after a 2-second delay to let player see the success message
         setTimeout(() => {
             try {
-                console.log(`🏆 Automatically showing leaderboard for ${difficulty} difficulty`);
+                 (`Automatically showing leaderboard for ${difficulty} difficulty`);
                 
                 // Import GAME_STATES at runtime to avoid circular dependencies
                 import('../utils/constants.js').then(({ GAME_STATES }) => {
@@ -591,14 +590,14 @@ export class LeaderboardSystem {
                         // Transition to leaderboard state
                         this.gameInstance.gameState = GAME_STATES.LEADERBOARD;
                         
-                        console.log(`✅ Successfully transitioned to leaderboard display for ${difficulty} difficulty`);
+                         (`Successfully transitioned to leaderboard display for ${difficulty} difficulty`);
                     }
                 }).catch(error => {
-                    console.error('Error importing GAME_STATES:', error);
+                    // Error importing GAME_STATES (log removed)
                 });
                 
             } catch (error) {
-                console.error('Error showing leaderboard:', error);
+                // Error showing leaderboard (log removed)
             }
         }, 2000); // 2-second delay
     }
@@ -620,7 +619,7 @@ export class LeaderboardSystem {
                 try {
                     const hasEntry = await this.checkPlayerEntryInFirebase(difficulty, playerName);
                     if (hasEntry) {
-                        console.log(`🔍 Found duplicate name "${playerName}" in ${difficulty} Firebase leaderboard`);
+                         (`Found duplicate name "${playerName}" in ${difficulty} Firebase leaderboard`);
                         return true;
                     }
                 } catch (error) {
@@ -634,7 +633,7 @@ export class LeaderboardSystem {
             );
             
             if (localEntry) {
-                console.log(`🔍 Found duplicate name "${playerName}" in ${difficulty} local leaderboard`);
+                 (`Found duplicate name "${playerName}" in ${difficulty} local leaderboard`);
                 return true;
             }
         }
@@ -662,7 +661,7 @@ export class LeaderboardSystem {
             
             if (existingEntry) {
                 // Just inform the user, but allow the submission
-                console.log(`Player has existing entry: ${existingEntry.score}, new score: ${score}`);
+                 (`Player has existing entry: ${existingEntry.score}, new score: ${score}`);
             }
         }
         
@@ -733,7 +732,7 @@ export class LeaderboardSystem {
             return success;
             
         } catch (error) {
-            console.error('Error submitting score:', error);
+            // Error submitting score (log removed)
             this.uploadResult = {
                 success: false,
                 message: 'Upload failed! Please try again later.'
@@ -756,7 +755,7 @@ export class LeaderboardSystem {
             
             // Only submit if new score is higher than existing score
             if (existingEntry && score <= existingEntry.score) {
-                console.log(`⚠️ Not submitting offline: Existing score (${existingEntry.score}) >= new score (${score})`);
+                 (`Not submitting offline: Existing score (${existingEntry.score}) >= new score (${score})`);
                 return false;
             }
             
@@ -845,7 +844,7 @@ export class LeaderboardSystem {
         this.nameInputActive = false;
         this.currentUpload = null;
         this.playerName = '';
-        console.log('📊 Upload cancelled');
+         ('Upload cancelled');
     }
     
     /**
@@ -861,7 +860,7 @@ export class LeaderboardSystem {
         this.nameInputActive = false;
         this.showUploadPrompt = false;
         this.currentUpload = null;
-        console.log('🔄 LeaderboardSystem input state reset');
+         ('LeaderboardSystem input state reset');
     }
     
     /**
@@ -933,7 +932,7 @@ export class LeaderboardSystem {
             try {
                 localStorage.removeItem('coderunner_leaderboards');
                 localStorage.setItem('coderunner_no_fake_data', 'true');
-                console.log('Cleared all leaderboard data to remove fake submissions');
+                 ('Cleared all leaderboard data to remove fake submissions');
             } catch (error) {
                 console.warn('Failed to clear legacy data:', error);
             }
@@ -1151,12 +1150,12 @@ export class LeaderboardSystem {
     setupNetworkListeners() {
         // Listen for online/offline events
         window.addEventListener('online', () => {
-            console.log('Network connection restored');
+             ('Network connection restored');
             this.handleNetworkStatusChange(true);
         });
 
         window.addEventListener('offline', () => {
-            console.log('Network connection lost');
+             ('Network connection lost');
             this.handleNetworkStatusChange(false);
         });
 
@@ -1179,7 +1178,7 @@ export class LeaderboardSystem {
             // Try to verify actual connectivity
             const hasConnection = await this.checkNetworkConnectivity();
             this.isOnline = hasConnection;            if (hasConnection) {
-                console.log('🌐 Switched to online mode');
+                 ('Switched to online mode');
                 // Refresh leaderboards when coming back online
                 await this.loadFirebaseLeaderboards();
                   // Update Game's bestScores after switching back online
@@ -1189,7 +1188,7 @@ export class LeaderboardSystem {
             }
         } else {
             this.isOnline = false;
-            console.log('💾 Switched to offline mode');
+             ('Switched to offline mode');
         }
     }
     
@@ -1198,10 +1197,10 @@ export class LeaderboardSystem {
      * Usage in console: game.leaderboardSystem.testModeration("inappropriate_name")
      */
     testModeration(testName) {
-        console.log(`🧪 Testing moderation for name: "${testName}"`);
+         (`Testing moderation for name: "${testName}"`);
         const validation = this.validatePlayerName(testName);
-        console.log('📋 Validation result:', validation);
-        console.log('📊 Current moderation status:', this.getModerationStatus());
+         ('Validation result:', validation);
+         ('Current moderation status:', this.getModerationStatus());
         return validation;
     }
     
@@ -1210,10 +1209,10 @@ export class LeaderboardSystem {
      * Usage in console: game.leaderboardSystem.forceViolation("test_name")
      */
     forceViolation(testName = "test_inappropriate") {
-        console.log(`⚠️ Forcing violation for name: "${testName}"`);
+         (`Forcing violation for name: "${testName}"`);
         const result = this.recordViolation(testName);
-        console.log('📋 Violation result:', result);
-        console.log('📊 Updated moderation status:', this.getModerationStatus());
+         ('Violation result:', result);
+         ('Updated moderation status:', this.getModerationStatus());
         return result;
     }
     
@@ -1221,14 +1220,14 @@ export class LeaderboardSystem {
      * Debug function: Show current moderation data
      * Usage in console: game.leaderboardSystem.showModerationData()
      */
-    showModerationData() {        console.log('📊 Current Moderation Data:');
-        console.log('- Violations:', this.moderationData.violations);
-        console.log('- Last Violation:', new Date(this.moderationData.lastViolationTime));
-        console.log('- Ban End Time:', new Date(this.moderationData.banEndTime));
-        console.log('- Warning History:', this.moderationData.warningHistory);
-        console.log('- Is Banned:', this.isPlayerBanned());
+    showModerationData() {         ('Current Moderation Data:');
+         ('- Violations:', this.moderationData.violations);
+         ('- Last Violation:', new Date(this.moderationData.lastViolationTime));
+         ('- Ban End Time:', new Date(this.moderationData.banEndTime));
+         ('- Warning History:', this.moderationData.warningHistory);
+         ('- Is Banned:', this.isPlayerBanned());
         if (this.isPlayerBanned()) {
-            console.log('- Hours Remaining:', this.getBanTimeRemaining());
+             ('- Hours Remaining:', this.getBanTimeRemaining());
         }
         return this.moderationData;
     }
@@ -1287,7 +1286,7 @@ export class LeaderboardSystem {
             
             return snapshot.exists();
         } catch (error) {
-            console.error('Error checking player entry in Firebase:', error);
+            // Error checking player entry in Firebase (log removed)
             return false;
         }
     }
@@ -1317,7 +1316,7 @@ export class LeaderboardSystem {
             
             return highestScore;
         } catch (error) {
-            console.error('Error getting player score from Firebase:', error);
+            // Error getting player score from Firebase (log removed)
             return null;
         }
     }
@@ -1409,7 +1408,7 @@ export class LeaderboardSystem {
                 this.refreshLeaderboards();
             }
             
-            console.log(`📊 Switched to ${difficulty} leaderboard`);
+             (`Switched to ${difficulty} leaderboard`);
         }
     }
     
@@ -1549,7 +1548,7 @@ export class LeaderboardSystem {
      * Handle click events on the leaderboard with enhanced UI feedback
      */
     handleClick(x, y) {
-        console.log('📊 Leaderboard clicked at:', x, y);
+         ('Leaderboard clicked at:', x, y);
         
         // Handle difficulty tab clicks using the game's tab hit areas
         if (this.gameInstance && this.gameInstance.tabHitAreas) {

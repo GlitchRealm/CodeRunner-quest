@@ -109,19 +109,17 @@ export class LeaderboardSystem {
         }
 
         try {
-            // Try to make a small request to check actual connectivity
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3000);
-            
-            const response = await fetch('https://www.google.com/favicon.ico', {
-                method: 'HEAD',
-                mode: 'no-cors',
-                cache: 'no-cache',
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            return true;        } catch (error) {
+            if (this.firebaseDatabase && typeof this.firebaseDatabase.ref === 'function') {
+                const connectedRef = this.firebaseDatabase.ref('.info/connected');
+                const snapshot = await Promise.race([
+                    connectedRef.once('value'),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('connection check timeout')), 3000))
+                ]);
+                return snapshot && snapshot.val() === true;
+            }
+
+            return true;
+        } catch (error) {
             return false;
         }
     }
@@ -710,7 +708,7 @@ export class LeaderboardSystem {
             }
         } else {
             this.isOnline = false;
-            console.log('💾 Switched to offline mode');
+             ('💾 Switched to offline mode');
         }
     }
     
@@ -719,10 +717,10 @@ export class LeaderboardSystem {
      * Usage in console: game.leaderboardSystem.testModeration("inappropriate_name")
      */
     testModeration(testName) {
-        console.log(`🧪 Testing moderation for name: "${testName}"`);
+         (`🧪 Testing moderation for name: "${testName}"`);
         const validation = this.validatePlayerName(testName);
-        console.log('📋 Validation result:', validation);
-        console.log('📊 Current moderation status:', this.getModerationStatus());
+         ('📋 Validation result:', validation);
+         ('📊 Current moderation status:', this.getModerationStatus());
         return validation;
     }
     
@@ -731,10 +729,10 @@ export class LeaderboardSystem {
      * Usage in console: game.leaderboardSystem.forceViolation("test_name")
      */
     forceViolation(testName = "test_inappropriate") {
-        console.log(`⚠️ Forcing violation for name: "${testName}"`);
+         (`⚠️ Forcing violation for name: "${testName}"`);
         const result = this.recordViolation(testName);
-        console.log('📋 Violation result:', result);
-        console.log('📊 Updated moderation status:', this.getModerationStatus());
+         ('📋 Violation result:', result);
+         ('📊 Updated moderation status:', this.getModerationStatus());
         return result;
     }
     
@@ -743,14 +741,14 @@ export class LeaderboardSystem {
      * Usage in console: game.leaderboardSystem.showModerationData()
      */
     showModerationData() {
-        console.log('📊 Current Moderation Data:');
-        console.log('- Violations:', this.moderationData.violations);
-        console.log('- Last Violation:', new Date(this.moderationData.lastViolationTime));
-        console.log('- Ban End Time:', new Date(this.moderationData.banEndTime));
-        console.log('- Warning History:', this.moderationData.warningHistory);
-        console.log('- Is Banned:', this.isPlayerBanned());
+         ('📊 Current Moderation Data:');
+         ('- Violations:', this.moderationData.violations);
+         ('- Last Violation:', new Date(this.moderationData.lastViolationTime));
+         ('- Ban End Time:', new Date(this.moderationData.banEndTime));
+         ('- Warning History:', this.moderationData.warningHistory);
+         ('- Is Banned:', this.isPlayerBanned());
         if (this.isPlayerBanned()) {
-            console.log('- Hours Remaining:', this.getBanTimeRemaining());
+             ('- Hours Remaining:', this.getBanTimeRemaining());
         }
         return this.moderationData;
     }

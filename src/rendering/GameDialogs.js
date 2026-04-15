@@ -156,7 +156,7 @@ export class GameDialogs {    constructor(game) {
         // Add glow to saved game notice
         ctx.shadowColor = 'rgba(86, 211, 100, 0.5)';
         ctx.shadowBlur = 10;
-        ctx.fillText(`💾 Saved Game Available`, width / 2, 135);
+    ctx.fillText(`Saved Game Available`, width / 2, 135);
         ctx.shadowBlur = 0;
     }
     
@@ -262,10 +262,10 @@ export class GameDialogs {    constructor(game) {
                     MEDIUM: "Moderate life boxes", 
                     HARD: "Rare life boxes"
                 }[Object.keys(DIFFICULTY_LEVELS)[index]] || "Life boxes available";
-                ctx.fillText(`❤️ ${lifeBoxFrequency}`, nameX, y + 40 + hoverOffset);
+                ctx.fillText(`${lifeBoxFrequency}`, nameX, y + 40 + hoverOffset);
             } else {
                 ctx.fillStyle = isHovered ? '#f85149' : '#da3633';
-                ctx.fillText(`💀 No life boxes - Extreme challenge!`, nameX, y + 40 + hoverOffset);
+                ctx.fillText(`No life boxes - Extreme challenge!`, nameX, y + 40 + hoverOffset);
             }
             
             // Add difficulty rating stars
@@ -528,7 +528,7 @@ export class GameDialogs {    constructor(game) {
         this.drawDifficultyTabs(ctx, width, tabHitAreas);
         
         // Enhanced online/offline status indicator with modern design
-        const statusText = this.game.leaderboardSystem.isOnline ? `🌐 ONLINE` : `💾 OFFLINE`;
+        const statusText = this.game.leaderboardSystem.isOnline ? `ONLINE` : `OFFLINE`;
         const statusColor = this.game.leaderboardSystem.isOnline ? '#40d158' : '#f85149';
         const statusBgColor = this.game.leaderboardSystem.isOnline ? 'rgba(64, 209, 88, 0.15)' : 'rgba(248, 81, 73, 0.15)';
         
@@ -656,10 +656,10 @@ export class GameDialogs {    constructor(game) {
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
         
-        ctx.fillText('🏆 RANK', tableX, headerY);
-        ctx.fillText('👤 PLAYER', tableX + 120, headerY);
-        ctx.fillText('📊 SCORE', tableX + 380, headerY);
-        ctx.fillText('⏱️ TIME', tableX + 520, headerY);
+        ctx.fillText('RANK', tableX, headerY);
+        ctx.fillText('PLAYER', tableX + 120, headerY);
+        ctx.fillText('SCORE', tableX + 380, headerY);
+        ctx.fillText('TIME', tableX + 520, headerY);
         
         ctx.shadowBlur = 0;
         ctx.shadowOffsetX = 0;
@@ -753,7 +753,7 @@ export class GameDialogs {    constructor(game) {
             let rankFont = '16px Courier New';
             
             if (index === 0) {
-                rankDisplay = '🥇';
+                rankDisplay = '';
                 rankColor = '#ffd700';
                 rankFont = 'bold 24px Courier New';
                 
@@ -764,14 +764,14 @@ export class GameDialogs {    constructor(game) {
                 ctx.shadowOffsetX = 0;
                 ctx.shadowOffsetY = 0;
             } else if (index === 1) {
-                rankDisplay = '🥈';
+                rankDisplay = '';
                 rankColor = '#c0c0c0';
                 rankFont = 'bold 22px Courier New';
                 
                 ctx.shadowColor = '#c0c0c0';
                 ctx.shadowBlur = 6;
             } else if (index === 2) {
-                rankDisplay = '🥉';
+                rankDisplay = '';
                 rankColor = '#cd7f32';
                 rankFont = 'bold 20px Courier New';
                 
@@ -919,7 +919,7 @@ export class GameDialogs {    constructor(game) {
             ctx.textAlign = 'center';
             ctx.shadowColor = '#ffd700';
             ctx.shadowBlur = 12;
-            ctx.fillText('🏆', 0, 0);
+            ctx.fillText('', 0, 0);
             ctx.shadowBlur = 0;
             
             ctx.restore();
@@ -1237,15 +1237,15 @@ export class GameDialogs {    constructor(game) {
         ctx.shadowColor = '#58a6ff';
         ctx.shadowBlur = 15;
         ctx.fillStyle = 'rgba(88, 166, 255, 0.4)';
-        ctx.fillText('🏆 UPLOAD SCORE', width / 2, dialogY + 50);
+        ctx.fillText('UPLOAD SCORE', width / 2, dialogY + 50);
         
         ctx.shadowBlur = 8;
         ctx.fillStyle = 'rgba(88, 166, 255, 0.8)';
-        ctx.fillText('🏆 UPLOAD SCORE', width / 2, dialogY + 50);
+        ctx.fillText('UPLOAD SCORE', width / 2, dialogY + 50);
         
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('🏆 UPLOAD SCORE', width / 2, dialogY + 50);
+        ctx.fillText('UPLOAD SCORE', width / 2, dialogY + 50);
         
         // Animated subtitle
         ctx.fillStyle = '#a855f7';
@@ -1409,7 +1409,7 @@ export class GameDialogs {    constructor(game) {
         ctx.textAlign = 'center';
         ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
         ctx.shadowBlur = 2;
-        ctx.fillText('🚀 UPLOAD', buttonWidth / 2, buttonHeight / 2 + 6);
+        ctx.fillText('UPLOAD', buttonWidth / 2, buttonHeight / 2 + 6);
         ctx.shadowBlur = 0;
         
         ctx.restore();
@@ -1444,7 +1444,7 @@ export class GameDialogs {    constructor(game) {
         ctx.textAlign = 'center';
         ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
         ctx.shadowBlur = 1;
-        ctx.fillText('❌ CANCEL', buttonWidth / 2, buttonHeight / 2 + 6);
+        ctx.fillText('CANCEL', buttonWidth / 2, buttonHeight / 2 + 6);
         ctx.shadowBlur = 0;
         
         ctx.restore();
@@ -1565,7 +1565,7 @@ export class GameDialogs {    constructor(game) {
         // Warning subtitle
         ctx.fillStyle = '#f85149';
         ctx.font = '18px Courier New';
-        ctx.fillText('⚠️  WARNING: This will permanently delete:', width / 2, dialogY + 85);
+        ctx.fillText('WARNING: This will permanently delete:', width / 2, dialogY + 85);
         
         // List of items that will be deleted
         ctx.fillStyle = '#7d8590';
@@ -1747,13 +1747,13 @@ export class GameDialogs {    constructor(game) {
         
         // Modern button definitions with icons
         const buttons = [
-            { text: 'Resume', action: 'resume', color: '#22c55e', icon: '▶️' },
-            { text: 'Restart', action: 'restart', color: '#3b82f6', icon: '🔄' },
-            { text: 'Difficulty', action: 'difficulty', color: '#8b5cf6', icon: '⚙️' },
-            { text: 'Main Menu', action: 'home', color: '#f59e0b', icon: '🏠' },
-            { text: 'Shop', action: 'shop', color: '#10b981', icon: '🛒' },
-            { text: 'Leaderboard', action: 'leaderboard', color: '#06b6d4', icon: '🏆' },
-            { text: 'Settings', action: 'settings', color: '#ef4444', icon: '⚙️' }
+            { text: 'Resume', action: 'resume', color: '#22c55e', icon: '' },
+            { text: 'Restart', action: 'restart', color: '#3b82f6', icon: '' },
+            { text: 'Difficulty', action: 'difficulty', color: '#8b5cf6', icon: '' },
+            { text: 'Main Menu', action: 'home', color: '#f59e0b', icon: '' },
+            { text: 'Shop', action: 'shop', color: '#10b981', icon: '' },
+            { text: 'Leaderboard', action: 'leaderboard', color: '#06b6d4', icon: '' },
+            { text: 'Settings', action: 'settings', color: '#ef4444', icon: '' }
         ];
         
         buttons.forEach((button, index) => {
@@ -2137,6 +2137,24 @@ export class GameDialogs {    constructor(game) {
         // Currency display (top right)
         const currentCurrency = this.game.upgradeSystem ? this.game.upgradeSystem.getDataPackets() : 0;
         this.drawCurrencyDisplay(ctx, width - 30, 35, currentCurrency);
+
+        // Back button (top left) so leaving the shop is always obvious and clickable
+        const backButton = {
+            x: 20,
+            y: 20,
+            width: 130,
+            height: 38,
+            action: 'back'
+        };
+        this.drawGlassmorphicPanel(ctx, backButton.x, backButton.y, backButton.width, backButton.height, 'rgba(88,166,255,0.12)', 'rgba(88,166,255,0.35)');
+        ctx.save();
+        ctx.font = 'bold 14px Courier New';
+        ctx.fillStyle = '#58a6ff';
+        ctx.textAlign = 'center';
+        ctx.fillText('BACK (ESC)', backButton.x + backButton.width / 2, backButton.y + 24);
+        ctx.restore();
+        shopHitAreas.push(backButton);
+
         // Shop system
         const shopSystem = this.game.shopSystem;
         if (!shopSystem) {
@@ -2149,11 +2167,11 @@ export class GameDialogs {    constructor(game) {
         }
         // Categories (with glassmorphic headers)
         const categories = {
-            movement: { name: 'Movement Control', color: '#40d158', emoji: '🏃', bgColor: 'rgba(64,209,88,0.08)' },
-            score: { name: 'Score Collection', color: '#58a6ff', emoji: '📊', bgColor: 'rgba(88,166,255,0.08)' },
-            powerups: { name: 'Power-Up Unlocks', color: '#ff9500', emoji: '⚡', bgColor: 'rgba(255,149,0,0.08)' },
-            revive: { name: 'Survival & Revival', color: '#a5a5a5', emoji: '💚', bgColor: 'rgba(165,165,165,0.08)' },
-            cosmetic: { name: 'Cosmetic Effects', color: '#d2a8ff', emoji: '✨', bgColor: 'rgba(210,168,255,0.08)' }
+            movement: { name: 'Movement Control', color: '#40d158', emoji: '', bgColor: 'rgba(64,209,88,0.08)' },
+            score: { name: 'Score Collection', color: '#58a6ff', emoji: '', bgColor: 'rgba(88,166,255,0.08)' },
+            powerups: { name: 'Power-Up Unlocks', color: '#ff9500', emoji: '', bgColor: 'rgba(255,149,0,0.08)' },
+            revive: { name: 'Survival & Revival', color: '#a5a5a5', emoji: '', bgColor: 'rgba(165,165,165,0.08)' },
+            cosmetic: { name: 'Cosmetic Effects', color: '#d2a8ff', emoji: '', bgColor: 'rgba(210,168,255,0.08)' }
         };
         const contentStartY = headerHeight + 20;
         const availableHeight = height - contentStartY - 60;
@@ -2270,17 +2288,17 @@ export class GameDialogs {    constructor(game) {
                         ctx.fillStyle = '#6e7681';
                         ctx.font = '18px Courier New';
                         ctx.textAlign = 'center';
-                        ctx.fillText('🔒', iconX + iconSize/2, iconY + iconSize/2 + 5);
+                        ctx.fillText('', iconX + iconSize/2, iconY + iconSize/2 + 5);
                     } else if (isOwned) {
                         ctx.fillStyle = '#40d158';
                         ctx.font = '16px Courier New';
                         ctx.textAlign = 'center';
-                        ctx.fillText('✓', iconX + iconSize/2, iconY + iconSize/2 + 5);
+                        ctx.fillText('', iconX + iconSize/2, iconY + iconSize/2 + 5);
                     } else if (!canAfford) {
                         ctx.fillStyle = '#f85149';
                         ctx.font = '16px Courier New';
                         ctx.textAlign = 'center';
-                        ctx.fillText('🔒', iconX + iconSize/2, iconY + iconSize/2 + 5);
+                        ctx.fillText('', iconX + iconSize/2, iconY + iconSize/2 + 5);
                     }
                     
                     // Apply blur to text content for locked items
@@ -2307,7 +2325,7 @@ export class GameDialogs {    constructor(game) {
                     } else {
                         ctx.fillStyle = canAfford ? '#ffd700' : '#f85149'; // Red price for unaffordable
                         ctx.textAlign = 'right';
-                        ctx.fillText(`${upgrade.price} 📦`, currentX + itemWidth - 35, currentY + 30);
+                        ctx.fillText(`${upgrade.price}`, currentX + itemWidth - 35, currentY + 30);
                         
                         // Add "NEED MORE DATA PACKETS" text for unaffordable items
                         if (!canAfford) {
@@ -2432,7 +2450,7 @@ export class GameDialogs {    constructor(game) {
         ctx.font = '14px Courier New';
         ctx.fillStyle = '#7d8590';
         ctx.textAlign = 'center';
-        ctx.fillText('[Enter] to Purchase   •   [Tab] to Change Category   •   [S] or [Esc] to Exit', width/2, height - 18);
+        ctx.fillText('[Enter] to Purchase   •   [Tab] to Change Category   •   [Q] or [Esc] to Exit', width/2, height - 18);
         ctx.restore();
         ctx.restore();
     }
@@ -2473,7 +2491,7 @@ export class GameDialogs {    constructor(game) {
         ctx.font = '18px Courier New';
         ctx.fillStyle = '#ffd700';
         ctx.textAlign = 'left';
-        ctx.fillText('📦', panelX + 10, panelY + 25);
+        ctx.fillText('', panelX + 10, panelY + 25);
         
         // Currency amount
         ctx.font = 'bold 16px Courier New';
@@ -2725,14 +2743,29 @@ export class GameDialogs {    constructor(game) {
      */
     handleShopClick(x, y) {
         const shopHitAreas = this.game.shopHitAreas || [];
-        console.log(`🛒 GameDialogs.handleShopClick called with ${shopHitAreas ? shopHitAreas.length : 0} hit areas`);
+         (`GameDialogs.handleShopClick called with ${shopHitAreas ? shopHitAreas.length : 0} hit areas`);
         
         for (const area of shopHitAreas) {
-            console.log(`🛒 Checking area: ${area.upgradeId} at (${area.x}, ${area.y}) size ${area.width}x${area.height}`);
+             (`Checking area: ${area.upgradeId} at (${area.x}, ${area.y}) size ${area.width}x${area.height}`);
             if (x >= area.x && x <= area.x + area.width &&
                 y >= area.y && y <= area.y + area.height) {
                 
-                console.log(`🛒 Hit detected for ${area.upgradeId} with action: ${area.action}`);
+                 (`Hit detected for ${area.upgradeId} with action: ${area.action}`);
+
+                if (area.action === 'back') {
+                    if (this.game.audioSystem) {
+                        this.game.audioSystem.onMenuClick();
+                    }
+
+                    const didNavigateBack = this.game.navigation && this.game.navigation.navigateBack
+                        ? this.game.navigation.navigateBack()
+                        : false;
+
+                    if (!didNavigateBack) {
+                        this.game.navigateToState(GAME_STATES.HOME);
+                    }
+                    return true;
+                }
                 
                 // Purchase upgrade if click is on a purchasable item
                 if (area.action === 'buy') {
@@ -2741,7 +2774,7 @@ export class GameDialogs {    constructor(game) {
                         const upgrade = this.game.shopSystem.upgradeData[area.upgradeId];
                         this.game.popupSystem.showConfirmationPopup(
                             'Purchase Successful', 
-                            `✅ Successfully purchased: ${upgrade.name}`
+                            `Successfully purchased: ${upgrade.name}`
                         );
                     }
                 } else if (area.action === 'insufficient_funds') {
@@ -2752,7 +2785,7 @@ export class GameDialogs {    constructor(game) {
                         const needed = upgrade.price - currentCurrency;
                         this.game.popupSystem.showErrorPopup(
                             'Insufficient Data Packets', 
-                            `❌ You need ${needed} more data packets to purchase "${upgrade.name}"\n\nCurrent: ${currentCurrency} 📦\nRequired: ${upgrade.price} 📦`
+                            `You need ${needed} more data packets to purchase "${upgrade.name}"\n\nCurrent: ${currentCurrency} 📦\nRequired: ${upgrade.price} 📦`
                         );
                     }
                 } else if (area.action === 'locked') {
@@ -2766,7 +2799,7 @@ export class GameDialogs {    constructor(game) {
                         });
                         this.game.popupSystem.showErrorPopup(
                             'Prerequisites Required', 
-                            `🔒 "${upgrade.name}" is locked!\n\nYou must first purchase:\n${prereqNames.map(name => `• ${name}`).join('\n')}`
+                            `"${upgrade.name}" is locked!\n\nYou must first purchase:\n${prereqNames.map(name => `• ${name}`).join('\n')}`
                         );
                     }
                 }
@@ -2775,7 +2808,7 @@ export class GameDialogs {    constructor(game) {
             }
         }
         
-        console.log('🛒 No hit areas matched the click');
+         ('🛒 No hit areas matched the click');
         return false;
     }
     
@@ -3171,9 +3204,9 @@ export class GameDialogs {    constructor(game) {
      */
     drawSettingsTabs(ctx, width, y, settingsHitAreas) {
         const tabs = [
-            { id: 'audio', name: 'Audio', icon: '🔊', color: '#10b981' },
-            { id: 'gameplay', name: 'Gameplay', icon: '🎮', color: '#3b82f6' },
-            { id: 'graphics', name: 'Graphics', icon: '🖥️', color: '#8b5cf6' }
+            { id: 'audio', name: 'Audio', icon: '', color: '#10b981' },
+            { id: 'gameplay', name: 'Gameplay', icon: '', color: '#3b82f6' },
+            { id: 'graphics', name: 'Graphics', icon: '', color: '#8b5cf6' }
         ];
         
         const tabWidth = 180;
@@ -3248,7 +3281,7 @@ export class GameDialogs {    constructor(game) {
         ctx.textAlign = 'left';
         ctx.shadowColor = '#10b981';
         ctx.shadowBlur = 8;
-        ctx.fillText('🔊 Audio Settings', panelX + 30, panelY + 40);
+        ctx.fillText('Audio Settings', panelX + 30, panelY + 40);
         ctx.shadowBlur = 0;
         ctx.font = '14px Courier New';
         ctx.fillStyle = '#8b949e';
@@ -3415,7 +3448,7 @@ export class GameDialogs {    constructor(game) {
         ctx.textAlign = 'left';
         ctx.shadowColor = '#3b82f6';
         ctx.shadowBlur = 8;
-        ctx.fillText('🎮 Gameplay Settings', panelX + 30, panelY + 40);
+        ctx.fillText('Gameplay Settings', panelX + 30, panelY + 40);
         ctx.shadowBlur = 0;
         ctx.font = '14px Courier New';
         ctx.fillStyle = '#8b949e';
@@ -3469,7 +3502,7 @@ export class GameDialogs {    constructor(game) {
         ctx.textAlign = 'left';
         ctx.shadowColor = '#8b5cf6';
         ctx.shadowBlur = 8;
-        ctx.fillText('🖥️ Graphics Settings', panelX + 30, panelY + 40);
+        ctx.fillText('Graphics Settings', panelX + 30, panelY + 40);
         ctx.shadowBlur = 0;
         ctx.font = '14px Courier New';
         ctx.fillStyle = '#8b949e';
@@ -3585,7 +3618,7 @@ export class GameDialogs {    constructor(game) {
         ctx.font = '18px Courier New';
         ctx.fillStyle = isHovered ? '#ef4444' : '#8b949e';
         ctx.textAlign = 'left';
-        ctx.fillText('⬅️', buttonX + 15, buttonY + 28);
+        ctx.fillText('', buttonX + 15, buttonY + 28);
         
         // Text
         ctx.font = 'bold 14px Courier New';

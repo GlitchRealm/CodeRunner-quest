@@ -68,7 +68,7 @@ export class LifeBoxSystem {
         if (distanceSinceLastSpawn >= spawnInterval) {
             this.spawnLifeBox();
             this.lastSpawnDistance = currentDistance;
-            console.log(`❤️ Life box spawned at ${currentDistance}m (next at ${currentDistance + spawnInterval}m)`);
+             (`❤️ Life box spawned at ${currentDistance}m (next at ${currentDistance + spawnInterval}m)`);
         }
     }
       spawnLifeBox() {
@@ -94,7 +94,7 @@ export class LifeBoxSystem {
         };
         
         this.spawnedLifeBoxes.push(lifeBox);
-        console.log(`❤️ Spawned life box at position (${spawnX}, ${spawnY - 35}) on ground level ${spawnY}`);
+         (`❤️ Spawned life box at position (${spawnX}, ${spawnY - 35}) on ground level ${spawnY}`);
     }
       /**
      * Find the ground level at a specific world X position
@@ -130,7 +130,7 @@ export class LifeBoxSystem {
                         // Check if this is a solid tile (floor or platform)
                         if (tile === TILE_TYPES.FLOOR || tile === TILE_TYPES.PLATFORM) {
                             const groundY = tileY * GAME_CONFIG.TILE_SIZE;
-                            console.log(`❤️ Found ground at nearby tile offset ${direction * offset}: groundY=${groundY}`);
+                             (`❤️ Found ground at nearby tile offset ${direction * offset}: groundY=${groundY}`);
                             return groundY;
                         }
                     }
@@ -165,7 +165,7 @@ export class LifeBoxSystem {
         // Heal the player by 1 heart
         if (this.game.player.health < this.game.player.maxHealth) {
             this.game.player.health = Math.min(this.game.player.health + 1, this.game.player.maxHealth);
-            console.log(`❤️ Life box collected! Health: ${this.game.player.health}/${this.game.player.maxHealth}`);
+             (`❤️ Life box collected! Health: ${this.game.player.health}/${this.game.player.maxHealth}`);
             
             // Play sound effect if available
             if (this.game.audioSystem) {
@@ -175,7 +175,7 @@ export class LifeBoxSystem {
             // Add visual feedback
             this.createCollectionEffect(lifeBox);
         } else {
-            console.log(`❤️ Life box collected but health is already full!`);
+             (`❤️ Life box collected but health is already full!`);
         }
     }
     
@@ -287,7 +287,7 @@ export class LifeBoxSystem {
     // Debug method to manually spawn a life box for testing
     debugSpawnLifeBox() {
         this.spawnLifeBox();
-        console.log('🔧 Debug: Life box manually spawned');
+         ('🔧 Debug: Life box manually spawned');
     }
     
     // Get count of life boxes on screen
@@ -299,6 +299,6 @@ export class LifeBoxSystem {
     reset() {
         this.spawnedLifeBoxes = [];
         this.lastSpawnDistance = 0;
-        console.log('🔄 LifeBoxSystem reset');
+         ('🔄 LifeBoxSystem reset');
     }
 }

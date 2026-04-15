@@ -46,10 +46,11 @@ export class GameRenderer {
     clearCanvas() {
         // Create different gradient complexity based on graphics quality
         const quality = this.game.graphicsQuality;
+        const shouldCacheGradient = this.renderOptimizations.cacheGradients && quality !== 'high';
         const gradientKey = `bg_${this.canvas.width}_${this.canvas.height}_${quality}`;
-        let gradient = this.gradientCache.get(gradientKey);
+        let gradient = shouldCacheGradient ? this.gradientCache.get(gradientKey) : null;
         
-        if (!gradient && this.renderOptimizations.cacheGradients) {
+        if (!gradient && shouldCacheGradient) {
             gradient = this.createBackgroundGradient(quality);
             
             // Manage cache size to prevent memory issues
@@ -577,7 +578,7 @@ export class GameRenderer {
         this.ctx.shadowBlur = 15 * pulse;
         this.ctx.shadowColor = rainbowColor;
         
-        this.ctx.fillText('🎉 NEW HIGH SCORE! 🎉', this.canvas.width / 2, this.canvas.height / 2 - 100);
+        this.ctx.fillText('NEW HIGH SCORE!', this.canvas.width / 2, this.canvas.height / 2 - 100);
         
         // Reset shadow
         this.ctx.shadowBlur = 0;
@@ -760,7 +761,7 @@ export class GameRenderer {
      */
     renderFloatingCode(time) {
         const codeSnippets = [
-            'function()', 'console.log', 'return null;', 'if (true)', 'await fetch', 
+            'function()', ' ', 'return null;', 'if (true)', 'await fetch', 
             'const x =', '=> {', '...args', 'new Promise', 'try { catch'
         ];
         
@@ -985,7 +986,7 @@ export class GameRenderer {
         // Add glow to saved game notice
         ctx.shadowColor = 'rgba(86, 211, 100, 0.5)';
         ctx.shadowBlur = 10;
-        ctx.fillText(`💾 Saved Game Available`, width / 2, 155);
+    ctx.fillText(`Saved Game Available`, width / 2, 155);
         ctx.shadowBlur = 0;
     }
     
@@ -1088,10 +1089,10 @@ export class GameRenderer {
                     MEDIUM: "Moderate life boxes", 
                     HARD: "Rare life boxes"
                 }[Object.keys(DIFFICULTY_LEVELS)[index]] || "Life boxes available";
-                ctx.fillText(`❤️ ${lifeBoxFrequency}`, nameX, y + 40 + hoverOffset);
+                ctx.fillText(`${lifeBoxFrequency}`, nameX, y + 40 + hoverOffset);
             } else {
                 ctx.fillStyle = isHovered ? '#f85149' : '#da3633';
-                ctx.fillText(`💀 No life boxes - Extreme challenge!`, nameX, y + 40 + hoverOffset);
+                ctx.fillText(`No life boxes - Extreme challenge!`, nameX, y + 40 + hoverOffset);
             }
             
             // Add difficulty rating stars
@@ -1337,6 +1338,6 @@ export class GameRenderer {
             ...options
         };
         
-        console.log('🎮 Render optimizations applied:', this.renderOptimizations);
+         ('🎮 Render optimizations applied:', this.renderOptimizations);
     }
 }

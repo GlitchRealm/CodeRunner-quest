@@ -3,10 +3,22 @@ import { Game } from './core/Game.js';
 import { performanceMonitor } from './utils/PerformanceMonitor.js';
 import './systems/ProfileManager.js'; // Initialize ProfileManager
 
+// Silence noisy console output by default to keep runtime console clean.
+// Set `window.DEBUG_CONSOLE = true` in the console or before loading to re-enable logs.
+if (typeof window !== 'undefined' && !window.DEBUG_CONSOLE) {
+    ['log', 'info', 'debug'].forEach(fn => {
+        try {
+            if (console && console[fn]) console[fn] = function() {};
+        } catch (e) {
+            // ignore if console cannot be overwritten
+        }
+    });
+}
+
 // Initialize and start the game when the page loads
 window.addEventListener('DOMContentLoaded', () => {
     try {
-        console.log('🚀 main.js DOMContentLoaded event fired');
+         ('main.js DOMContentLoaded event fired');
         
         // Initialize performance monitoring
         performanceMonitor.reset();
@@ -18,14 +30,14 @@ window.addEventListener('DOMContentLoaded', () => {
     
     // Connect global audio system to game instance
     if (window.audioSystem) {
-        console.log('🎵 Connecting audioSystem to game immediately');
+         ('Audio: Connecting audioSystem to game immediately');
         game.audioSystem = window.audioSystem;
     } else {
         // Wait for audio system to be initialized
-        console.log('🎵 AudioSystem not ready, setting up delayed connection');
+         ('AudioSystem not ready, setting up delayed connection');
         const checkAudioSystem = () => {
             if (window.audioSystem) {
-                console.log('🎵 Connecting audioSystem to game after delay');
+                 ('Audio: Connecting audioSystem to game after delay');
                 game.audioSystem = window.audioSystem;
             } else {
                 setTimeout(checkAudioSystem, 50);
@@ -34,19 +46,19 @@ window.addEventListener('DOMContentLoaded', () => {
         checkAudioSystem();
     }    // Connect general settings to game instance
     if (window.generalSettings) {
-        console.log('⚙️ Connecting generalSettings to game immediately');
+        ('Connecting generalSettings to game immediately');
         const fpsEnabled = window.generalSettings.isShowFpsCounterEnabled();
-        console.log('⚙️ FPS counter enabled from settings:', fpsEnabled);
+        ('FPS counter enabled from settings:', fpsEnabled);
         game.showFpsCounter = fpsEnabled;
         game.initializeGraphicsSettings(); // Refresh graphics settings
     } else {
         // Wait for general settings to be initialized
-        console.log('⚙️ GeneralSettings not ready, setting up delayed connection');
+         ('GeneralSettings not ready, setting up delayed connection');
         const checkGeneralSettings = () => {
             if (window.generalSettings) {
-                console.log('⚙️ Connecting generalSettings to game after delay');
+                 ('Connecting generalSettings to game after delay');
                 const fpsEnabled = window.generalSettings.isShowFpsCounterEnabled();
-                console.log('⚙️ FPS counter enabled from settings (delayed):', fpsEnabled);
+                 ('FPS counter enabled from settings (delayed):', fpsEnabled);
                 game.showFpsCounter = fpsEnabled;
                 game.initializeGraphicsSettings(); // Refresh graphics settings
             } else {
@@ -56,14 +68,14 @@ window.addEventListener('DOMContentLoaded', () => {
         checkGeneralSettings();
     }
         
-        console.log('🎮 Starting game...');
+         ('Starting game...');
         game.start();
-        console.log('🎮 Game initialization completed');
+         ('Game initialization completed');
         
     } catch (error) {
-        console.error('Failed to initialize game:', error);
+    // Failed to initialize game (log removed)
         
-        // Show error message to user
+                // Show error message to user
         const errorDiv = document.createElement('div');
         errorDiv.style.cssText = `
             position: fixed;
@@ -79,7 +91,7 @@ window.addEventListener('DOMContentLoaded', () => {
             z-index: 10000;
         `;
         errorDiv.innerHTML = `
-            <h3>⚠️ Game Failed to Start</h3>
+            <h3>Game Failed to Start</h3>
             <p>An error occurred while initializing the game.</p>
             <p>Please refresh the page to try again.</p>
             <button onclick="location.reload()" style="

@@ -42,12 +42,12 @@ export class TutorialSystem {
         // Button state for navigation
         this.buttons = {
             next: {
-                text: "Next →",
+                text: "Next",
                 x: 0, y: 0, width: 120, height: 40,
                 hovered: false, color: '#40d158'
             },
             previous: {
-                text: "← Previous",
+                text: "Previous",
                 x: 0, y: 0, width: 120, height: 40,
                 hovered: false, color: '#58a6ff'
             },
@@ -57,7 +57,7 @@ export class TutorialSystem {
                 hovered: false, color: '#f85149'
             },
             complete: {
-                text: "Let's Play! 🚀",
+                text: "Let's Play!",
                 x: 0, y: 0, width: 150, height: 45,
                 hovered: false, color: '#40d158'
             }
@@ -81,7 +81,7 @@ export class TutorialSystem {
                 this.hasShownSettings = this.tutorialProgress.settings || false;
             }
         } catch (error) {
-            console.warn('🎓 Failed to load tutorial progress:', error);
+            console.warn('Failed to load tutorial progress:', error);
             this.tutorialProgress = {};
         }
     }
@@ -93,7 +93,7 @@ export class TutorialSystem {
         try {
             localStorage.setItem('coderunner_tutorial_progress', JSON.stringify(this.tutorialProgress));
         } catch (error) {
-            console.warn('🎓 Failed to save tutorial progress:', error);
+            console.warn('Failed to save tutorial progress:', error);
         }
     }
     
@@ -115,19 +115,17 @@ export class TutorialSystem {
      */
     startTutorial(tutorialType = 'welcome') {
         if (!this.tutorials[tutorialType]) {
-            console.warn('🎓 Unknown tutorial type:', tutorialType);
+            console.warn('Unknown tutorial type:', tutorialType);
             return;
         }
         
-        this.isActive = true;
-        this.currentTutorial = tutorialType;
-        this.currentStep = 0;
-        this.fadeAlpha = 0;
-        this.targetAlpha = 1;
-        this.pulseAnimation = 0;
-        
-        console.log('🎓 Starting tutorial:', tutorialType);
-        this.addEventListeners();
+    this.isActive = true;
+    this.currentTutorial = tutorialType;
+    this.currentStep = 0;
+    this.fadeAlpha = 0;
+    this.targetAlpha = 1;
+    this.pulseAnimation = 0;
+    this.addEventListeners();
     }
     
     /**
@@ -135,10 +133,10 @@ export class TutorialSystem {
      */
     createWelcomeTutorial() {
         return {
-            title: "Welcome to CodeRunner! 🎮",
+            title: "Welcome to CodeRunner!",
             steps: [
                 {
-                    title: "Welcome, Runner! 👋",
+                    title: "Welcome, Runner!",
                     content: [
                         "Welcome to CodeRunner - the ultimate coding-themed endless runner!",
                         "",
@@ -151,12 +149,12 @@ export class TutorialSystem {
                     interactive: false
                 },
                 {
-                    title: "Your Mission 🎯",
+                    title: "Your Mission",
                     content: [
                         "Your goal is simple: RUN as far as you can!",
                         "",
                         "• Avoid deadly obstacles like spikes, saws, and lasers",
-                        "• Collect data packets (📦) to earn upgrade points",
+                        "• Collect data packets to earn upgrade points",
                         "• Survive as long as possible to set high scores",
                         "• Unlock achievements and climb the leaderboard",
                         "",
@@ -166,13 +164,13 @@ export class TutorialSystem {
                     interactive: false
                 },
                 {
-                    title: "Basic Controls 🎮",
+                    title: "Basic Controls",
                     content: [
                         "Master these essential controls:",
                         "",
                         "MOVEMENT:",
-                        "• ← → Arrow Keys or A/D: Move left/right",
-                        "• ↑ Arrow Key, W, or Spacebar: Jump",
+                        "• Arrow Keys or A/D: Move left/right",
+                        "• Arrow Key Up, W, or Spacebar: Jump",
                         "",
                         "GAME CONTROLS:",
                         "• Q: Open upgrade shop",
@@ -183,7 +181,7 @@ export class TutorialSystem {
                     interactive: false
                 },
                 {
-                    title: "Health & Survival ❤️",
+                    title: "Health & Survival",
                     content: [
                         "Stay alive with the health system:",
                         "",
@@ -195,18 +193,18 @@ export class TutorialSystem {
                     interactive: false
                 },
                 {
-                    title: "Ready to Start? 🚀",
+                    title: "Ready to Start?",
                     content: [
                         "You're all set to begin your CodeRunner adventure!",
                         "",
                         "Choose your difficulty and start running:",
                         "",
-                        "🔹 Easy: Frequent life boxes, gentler difficulty curve",
-                        "🔸 Medium: Balanced challenge with moderate healing",
-                        "🔴 Hard: Rare life boxes, steep difficulty increases",
-                        "❌ Extreme: No life boxes, ultimate survival challenge",
+                        "Easy: Frequent life boxes, gentler difficulty curve",
+                        "Medium: Balanced challenge with moderate healing",
+                        "Hard: Rare life boxes, steep difficulty increases",
+                        "Extreme: No life boxes, ultimate survival challenge",
                         "",
-                        "Good luck, Runner! 🏃‍♂️💨"
+                        "Good luck, Runner!"
                     ],
                     highlight: null,
                     interactive: false
@@ -220,10 +218,10 @@ export class TutorialSystem {
      */
     createGameplayTutorial() {
         return {
-            title: "Gameplay Tutorial 🎮",
+            title: "Gameplay Tutorial",
             steps: [
                 {
-                    title: "Movement Basics 🏃‍♂️",
+                    title: "Movement Basics",
                     content: [
                         "Let's practice movement:",
                         "",
@@ -238,14 +236,14 @@ export class TutorialSystem {
                     requirement: 'movement'
                 },
                 {
-                    title: "Obstacle Awareness ⚠️",
+                    title: "Obstacle Awareness",
                     content: [
                         "Watch out for these dangerous obstacles:",
                         "",
-                        "🔺 Spikes: Touch and you lose health",
-                        "⚙️ Saws: Rotating death traps",
-                        "🔴 Lasers: Instant damage beams",
-                        "🟫 Crushers: Moving death blocks",
+                        "Spikes: Touch and you lose health",
+                        "Saws: Rotating death traps",
+                        "Lasers: Instant damage beams",
+                        "Crushers: Moving death blocks",
                         "",
                         "Learn their patterns and time your moves!"
                     ],
@@ -253,7 +251,7 @@ export class TutorialSystem {
                     interactive: false
                 },
                 {
-                    title: "Collecting Data Packets 📦",
+                    title: "Collecting Data Packets",
                     content: [
                         "Data packets are your currency:",
                         "",
@@ -276,10 +274,10 @@ export class TutorialSystem {
      */
     createUpgradesTutorial() {
         return {
-            title: "Upgrade System Tutorial 🛒",
+            title: "Upgrade System Tutorial",
             steps: [
                 {
-                    title: "The Upgrade Shop 🛒",
+                    title: "The Upgrade Shop",
                     content: [
                         "Spend your data packets on powerful upgrades:",
                         "",
@@ -294,7 +292,7 @@ export class TutorialSystem {
                     interactive: false
                 },
                 {
-                    title: "Movement Upgrades 🏃‍♂️",
+                    title: "Movement Upgrades",
                     content: [
                         "Enhance your runner's abilities:",
                         "",
@@ -309,7 +307,7 @@ export class TutorialSystem {
                     interactive: false
                 },
                 {
-                    title: "Economic Upgrades 💰",
+                    title: "Economic Upgrades",
                     content: [
                         "Boost your earning potential:",
                         "",
@@ -331,10 +329,10 @@ export class TutorialSystem {
      */
     createSettingsTutorial() {
         return {
-            title: "Settings & Customization ⚙️",
+            title: "Settings & Customization",
             steps: [
                 {
-                    title: "Game Settings ⚙️",
+                    title: "Game Settings",
                     content: [
                         "Customize your experience:",
                         "",
@@ -352,7 +350,7 @@ export class TutorialSystem {
                     interactive: false
                 },
                 {
-                    title: "Control Customization 🎮",
+                    title: "Control Customization",
                     content: [
                         "Make the controls work for you:",
                         "",
@@ -374,10 +372,10 @@ export class TutorialSystem {
      */
     createControlsTutorial() {
         return {
-            title: "Advanced Controls 🎮",
+            title: "Advanced Controls",
             steps: [
                 {
-                    title: "Pro Movement Tips 🏃‍♂️",
+                    title: "Pro Movement Tips",
                     content: [
                         "Master these advanced techniques:",
                         "",
@@ -392,7 +390,7 @@ export class TutorialSystem {
                     interactive: false
                 },
                 {
-                    title: "Game Management 📋",
+                    title: "Game Management",
                     content: [
                         "Essential game controls:",
                         "",
@@ -612,25 +610,21 @@ export class TutorialSystem {
         this.currentTutorial = null;
         this.currentStep = 0;
         this.removeEventListeners();
-        
         // Return to appropriate game state
         if (this.game.gameState === GAME_STATES.HOME) {
             // Stay on home screen
         } else {
             this.game.gameState = GAME_STATES.HOME;
         }
-        
-        console.log('🎓 Tutorial completed');
     }
       /**
      * Stop the tutorial without completing it (for state transitions)
      */
     stopTutorial() {
-        this.isActive = false;
-        this.currentTutorial = null;
-        this.currentStep = 0;
-        this.removeEventListeners();
-        console.log('🎓 Tutorial stopped');
+    this.isActive = false;
+    this.currentTutorial = null;
+    this.currentStep = 0;
+    this.removeEventListeners();
     }
     /**
      * Update tutorial system (animations, etc.)
@@ -1266,13 +1260,12 @@ export class TutorialSystem {
      * Reset all tutorial progress (for testing/debugging)
      */
     resetTutorialProgress() {
-        this.tutorialProgress = {};
-        this.hasShownWelcome = false;
-        this.hasShownGameplay = false;
-        this.hasShownUpgrades = false;
-        this.hasShownSettings = false;
-        this.saveTutorialProgress();
-        console.log('🎓 Tutorial progress reset');
+    this.tutorialProgress = {};
+    this.hasShownWelcome = false;
+    this.hasShownGameplay = false;
+    this.hasShownUpgrades = false;
+    this.hasShownSettings = false;
+    this.saveTutorialProgress();
     }
     
     /**
@@ -1288,9 +1281,7 @@ export class TutorialSystem {
                 alpha: 0,
                 targetAlpha: 0.9
             };
-            
             this.quickHint = hint;
-            
             // Auto-hide the hint
             setTimeout(() => {
                 if (this.quickHint === hint) {
@@ -1310,7 +1301,7 @@ export class TutorialSystem {
      */
     showDataPacketHint() {
         if (!this.tutorialProgress.dataPacketHint) {
-            this.showQuickHint("💡 Data Packets earned! Press Q to open the upgrade shop.");
+            this.showQuickHint("Data Packets earned! Press Q to open the upgrade shop.");
             this.tutorialProgress.dataPacketHint = true;
             this.saveTutorialProgress();
         }
@@ -1321,7 +1312,7 @@ export class TutorialSystem {
      */
     showLowHealthHint() {
         if (!this.tutorialProgress.lowHealthHint) {
-            this.showQuickHint("❤️ Low health! Look for life boxes or upgrade your health regeneration.");
+            this.showQuickHint("Low health! Look for life boxes or upgrade your health regeneration.");
             this.tutorialProgress.lowHealthHint = true;
             this.saveTutorialProgress();
         }
@@ -1332,7 +1323,7 @@ export class TutorialSystem {
      */
     showAchievementHint() {
         if (!this.tutorialProgress.achievementHint) {
-            this.showQuickHint("🏆 Achievement unlocked! Check the achievements menu from the home screen.");
+            this.showQuickHint("Achievement unlocked! Check the achievements menu from the home screen.");
             this.tutorialProgress.achievementHint = true;
             this.saveTutorialProgress();
         }

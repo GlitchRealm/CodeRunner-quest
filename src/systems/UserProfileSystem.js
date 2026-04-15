@@ -27,7 +27,7 @@ export class UserProfileSystem {
         
         // Authentication providers
         this.auth = null;
-        this.firestore = null;
+        this.database = null;
         this.githubProvider = null;
         
         // UI state
@@ -96,7 +96,7 @@ export class UserProfileSystem {
         this.loadGameSettings();
         this.initializeRealStats();
         
-        console.log('👤 UserProfileSystem initialized');
+         ('👤 UserProfileSystem initialized');
     }
 
     /**
@@ -104,9 +104,9 @@ export class UserProfileSystem {
      */
     setupFirebase() {
         try {
-            if (window.firebaseAuth && window.firebaseFirestore) {
+            if (window.firebaseAuth && window.firebaseDatabase) {
                 this.auth = window.firebaseAuth;
-                this.firestore = window.firebaseFirestore;
+                this.database = window.firebaseDatabase;
                 
                 // Setup GitHub provider
                 this.githubProvider = new firebase.auth.GithubAuthProvider();
@@ -123,12 +123,12 @@ export class UserProfileSystem {
                     this.handleAuthStateChange(user);
                 });
                 
-                console.log('🔑 Firebase authentication configured with GitHub and Google support');
+                 ('🔑 Firebase authentication configured with GitHub and Google support');
             } else {
-                console.warn('⚠️ Firebase not available - limited functionality');
+                console.warn('Firebase not available - limited functionality');
             }
         } catch (error) {
-            console.error('❌ Error setting up Firebase:', error);
+            // ❌ Error setting up Firebase (log removed)
         }
     }
 
@@ -142,7 +142,7 @@ export class UserProfileSystem {
             this.currentUser = user;
             this.isLoggedIn = true;
             
-            // Load user profile from Firestore
+            // Load user profile from Realtime Database
             await this.loadUserProfile();
             
             // Load game settings from cloud
@@ -159,8 +159,8 @@ export class UserProfileSystem {
                 this.updateUserStats();
             }
             
-            console.log('👤 User authenticated:', user.email || user.displayName);
-            console.log('☁️ Cloud save system activated');
+             ('👤 User authenticated:', user.email || user.displayName);
+             ('☁️ Cloud save system activated');
         } else {
             // Save current progress before signing out
             if (this.isLoggedIn && this.game && this.game.cloudSaveSystem) {
@@ -173,8 +173,8 @@ export class UserProfileSystem {
             this.userProfile = null;
             this.resetUserStats();
             
-            console.log('👤 User signed out');
-            console.log('☁️ Cloud save system deactivated');
+             ('👤 User signed out');
+             ('☁️ Cloud save system deactivated');
         }
         
         // Notify game of auth state change
@@ -196,15 +196,15 @@ export class UserProfileSystem {
         // Define menu items for different views
         this.menuItems = {
             main: [
-                { id: 'stats', label: '📊 View Stats', description: 'See your game statistics' },
-                { id: 'syncCloud', label: '☁️ Sync with Cloud', description: 'Manually sync your data with cloud' },
-                { id: 'settings', label: '⚙️ Account Settings', description: 'Manage your account' },
-                { id: 'logout', label: '🚪 Sign Out', description: 'Sign out of your account' }
+                { id: 'stats', label: 'View Stats', description: 'See your game statistics' },
+                { id: 'syncCloud', label: 'Sync with Cloud', description: 'Manually sync your data with cloud' },
+                { id: 'settings', label: 'Account Settings', description: 'Manage your account' },
+                { id: 'logout', label: 'Sign Out', description: 'Sign out of your account' }
             ],
             guest: [
-                { id: 'login', label: '🔑 Sign In', description: 'Sign in to save your progress' },
-                { id: 'register', label: '📝 Create Account', description: 'Create a new account' },
-                { id: 'playAsGuest', label: '🎮 Play as Guest', description: 'Play without saving progress' }
+                { id: 'login', label: 'Sign In', description: 'Sign in to save your progress' },
+                { id: 'register', label: 'Create Account', description: 'Create a new account' },
+                { id: 'playAsGuest', label: 'Play as Guest', description: 'Play without saving progress' }
             ]
         };
         
@@ -240,11 +240,11 @@ export class UserProfileSystem {
                     
                     // Try async save but don't wait for it
                     this.game.cloudSaveSystem.saveAllGameData().catch(error => {
-                        console.warn('⚠️ Failed to save data on page unload:', error);
+                        console.warn('Failed to save data on page unload:', error);
                     });
                     
                 } catch (error) {
-                    console.warn('⚠️ Failed to save data on page unload:', error);
+                    console.warn('Failed to save data on page unload:', error);
                 }
             }
         };
@@ -277,7 +277,7 @@ export class UserProfileSystem {
         this.positionElements();
         this.addEventListeners();
         
-        console.log('👤 User profile system started with view:', this.currentView);
+         ('👤 User profile system started with view:', this.currentView);
     }
 
     /**
@@ -286,7 +286,7 @@ export class UserProfileSystem {
     stop() {
         this.isActive = false;
         this.removeEventListeners();
-        console.log('👤 User profile system stopped');
+         ('👤 User profile system stopped');
     }
 
     /**
@@ -309,19 +309,18 @@ export class UserProfileSystem {
     }
 
     /**
-     * Load user profile data from Firestore
+     * Load user profile data from Realtime Database
      */
     async loadUserProfile() {
-        if (!this.firestore || !this.currentUser) return;
+        if (!this.database || !this.currentUser) return;
         
         try {
-            const profileDoc = await this.firestore
-                .collection('userProfiles')
-                .doc(this.currentUser.uid)
-                .get();
+            const profileRef = this.database.ref(`userProfiles/${this.currentUser.uid}`);
+            const profileSnapshot = await profileRef.once('value');
+            const profileData = profileSnapshot.val();
             
-            if (profileDoc.exists) {
-                this.userProfile = profileDoc.data();
+            if (profileData) {
+                this.userProfile = profileData;
                 this.userStats = { ...this.userStats, ...this.userProfile.stats };
                 
                 // Load selected sprite from cloud profile if available
@@ -354,50 +353,68 @@ export class UserProfileSystem {
                 this.inputFields.displayName.value = this.userProfile.displayName;
             }
             
-            console.log('👤 User profile loaded successfully');
+             ('👤 User profile loaded successfully');
         } catch (error) {
-            console.error('❌ Error loading user profile:', error);
+            // ❌ Error loading user profile (log removed)
             this.showError('Failed to load profile data');
         }
     }
 
     /**
-     * Save user profile data to Firestore
+     * Save user profile data to Realtime Database
      */
     async saveUserProfile() {
-        if (!this.firestore || !this.currentUser || !this.userProfile) return;
+        if (!this.database || !this.currentUser || !this.userProfile) return;
+        
+        // Prepare profile data outside try-catch so it's accessible in fallback
+        this.userProfile.updatedAt = new Date().toISOString();
+        this.userProfile.stats = this.userStats;
+        
+        // Include selected sprite from ProfileManager if available
+        if (typeof window !== 'undefined' && window.profileManager) {
+            let selectedSprite = window.profileManager.getSelectedSprite();
+            // Ensure we store only the sprite ID/filename, not the full path
+            if (selectedSprite && selectedSprite.includes('/')) {
+                selectedSprite = selectedSprite.split('/').pop();
+            }
+            this.userProfile.selectedSprite = selectedSprite;
+        }
+        
+        // Sanitize the profile data to remove undefined values
+        const sanitizedProfile = this.sanitizeProfileData(this.userProfile);
         
         try {
-            this.userProfile.updatedAt = new Date().toISOString();
-            this.userProfile.stats = this.userStats;
-            
-            // Include selected sprite from ProfileManager if available
-            if (typeof window !== 'undefined' && window.profileManager) {
-                let selectedSprite = window.profileManager.getSelectedSprite();
-                // Ensure we store only the sprite ID/filename, not the full path
-                if (selectedSprite && selectedSprite.includes('/')) {
-                    selectedSprite = selectedSprite.split('/').pop();
-                }
-                this.userProfile.selectedSprite = selectedSprite;
-            }
-            
-            // Sanitize the profile data to remove undefined values
-            const sanitizedProfile = this.sanitizeProfileData(this.userProfile);
-            
-            await this.firestore
-                .collection('userProfiles')
-                .doc(this.currentUser.uid)
-                .set(sanitizedProfile, { merge: true });
-            
-            console.log('👤 User profile saved successfully with selected sprite:', this.userProfile.selectedSprite);
+            const profileRef = this.database.ref(`userProfiles/${this.currentUser.uid}`);
+            await profileRef.set(sanitizedProfile);
+
+             ('👤 User profile saved successfully with selected sprite:', this.userProfile.selectedSprite);
         } catch (error) {
-            console.error('❌ Error saving user profile:', error);
+            // Log detailed error
+            // ❌ Error saving user profile (log removed)
+
+            // If the error looks like a permissions or network issue, fallback to local save
+            const isFirebasePermissionError = error && error.code && (error.code.includes('permission') || error.message && error.message.toLowerCase().includes('permission'));
+            const isNetworkError = error && (error.message && (error.message.toLowerCase().includes('network') || error.message.toLowerCase().includes('offline')));
+
+            if ((isFirebasePermissionError || isNetworkError) && this.game && this.game.cloudSaveSystem && typeof this.game.cloudSaveSystem.saveProfileToLocalStorage === 'function') {
+                try {
+                    // Save to localStorage as a robust fallback so user progress isn't lost
+                    this.game.cloudSaveSystem.saveProfileToLocalStorage(sanitizedProfile);
+                    console.warn('⚠️ Firebase save failed; profile saved locally as fallback.');
+                    this.showError('Could not save to cloud (permissions/network). Profile saved locally.', 'warning');
+                    return;
+                } catch (localSaveError) {
+                    // ❌ Failed to save profile locally as fallback (log removed)
+                }
+            }
+
+            // Generic failure path
             this.showError('Failed to save profile data');
         }
     }
     
     /**
-     * Sanitize profile data to remove undefined values for Firestore
+     * Sanitize profile data to remove undefined values for Realtime Database
      */
     sanitizeProfileData(data) {
         if (!data || typeof data !== 'object') {
@@ -550,7 +567,7 @@ export class UserProfileSystem {
             this.showSuccess('Successfully signed in!');
             this.clearInputs();
         } catch (error) {
-            console.error('❌ Sign in error:', error);
+            // ❌ Sign in error (log removed)
             this.showError(this.getAuthErrorMessage(error));
         } finally {
             this.loading = false;
@@ -581,7 +598,7 @@ export class UserProfileSystem {
             this.showSuccess('Account created successfully!');
             this.clearInputs();
         } catch (error) {
-            console.error('❌ Sign up error:', error);
+            // ❌ Sign up error (log removed)
             this.showError(this.getAuthErrorMessage(error));
         } finally {
             this.loading = false;
@@ -603,7 +620,7 @@ export class UserProfileSystem {
             await this.auth.signInWithPopup(this.githubProvider);
             this.showSuccess('Successfully signed in with GitHub!');
         } catch (error) {
-            console.error('❌ GitHub sign in error:', error);
+            // ❌ GitHub sign in error (log removed)
             this.showError(this.getAuthErrorMessage(error));
         } finally {
             this.loading = false;
@@ -625,7 +642,7 @@ export class UserProfileSystem {
             this.showSuccess('Successfully signed in with Google!');
             // User state will be handled by onAuthStateChanged
         } catch (error) {
-            console.error('Google sign-in error:', error);
+            // Google sign-in error (log removed)
             this.showError('Failed to sign in with Google: ' + error.message);
         } finally {
             this.loading = false;
@@ -642,15 +659,15 @@ export class UserProfileSystem {
         
         try {
             // CRITICAL FIX: Save all data to cloud BEFORE signing out!
-            console.log('💾 Saving all progress to cloud before signing out...');
+             ('💾 Saving all progress to cloud before signing out...');
             
             // Save all game data to cloud first
             if (this.game && this.game.cloudSaveSystem) {
                 try {
                     await this.game.cloudSaveSystem.saveAllGameData();
-                    console.log('✅ All data saved to cloud successfully before sign out');
+                     ('✅ All data saved to cloud successfully before sign out');
                 } catch (saveError) {
-                    console.error('❌ Failed to save data to cloud before sign out:', saveError);
+                    // ❌ Failed to save data to cloud before sign out (log removed)
                     // Continue with sign out even if save fails
                 }
             }
@@ -658,9 +675,9 @@ export class UserProfileSystem {
             // Save user profile data to cloud
             try {
                 await this.saveUserProfile();
-                console.log('✅ User profile saved to cloud before sign out');
+                 ('✅ User profile saved to cloud before sign out');
             } catch (profileSaveError) {
-                console.error('❌ Failed to save profile to cloud before sign out:', profileSaveError);
+                // ❌ Failed to save profile to cloud before sign out (log removed)
                 // Continue with sign out even if profile save fails
             }
             
@@ -669,7 +686,7 @@ export class UserProfileSystem {
             
             // Now proceed with sign out
             await this.auth.signOut();
-            console.log('🔄 User signed out successfully, reloading page...');
+             ('🔄 User signed out successfully, reloading page...');
             
             // Clear all localStorage data to ensure clean state
             localStorage.clear();
@@ -681,7 +698,7 @@ export class UserProfileSystem {
             window.location.reload();
             
         } catch (error) {
-            console.error('❌ Sign out error:', error);
+            // ❌ Sign out error (log removed)
             this.showError('Failed to sign out');
             this.loading = false;
         }
@@ -712,7 +729,7 @@ export class UserProfileSystem {
             this.showSuccess('Password changed successfully!');
             this.clearInputs();
         } catch (error) {
-            console.error('❌ Password change error:', error);
+            // ❌ Password change error (log removed)
             this.showError(this.getAuthErrorMessage(error));
         } finally {
             this.loading = false;
@@ -741,7 +758,7 @@ export class UserProfileSystem {
             
             this.showSuccess('Display name updated successfully!');
         } catch (error) {
-            console.error('❌ Display name update error:', error);
+            // ❌ Display name update error (log removed)
             this.showError('Failed to update display name');
         } finally {
             this.loading = false;
@@ -788,7 +805,7 @@ export class UserProfileSystem {
         this.errorMessage = message;
         this.successMessage = '';
         this.messageTimer = Date.now();
-        console.error('👤 Error:', message);
+    // 👤 Error: (message removed)
     }
 
     /**
@@ -798,7 +815,7 @@ export class UserProfileSystem {
         this.successMessage = message;
         this.errorMessage = '';
         this.messageTimer = Date.now();
-        console.log('👤 Success:', message);
+         ('👤 Success:', message);
     }
 
     /**
@@ -940,12 +957,21 @@ export class UserProfileSystem {
         if (!this.isActive) return;
         
         if (e.key === 'Escape') {
-            if (this.currentView === 'main' || this.currentView === 'guest') {
-                this.stop();
-                this.game.setGameState(GAME_STATES.MENU);
-            } else {
+            // Inside profile subviews, Escape returns to the profile root view first.
+            if (this.currentView !== 'main' && this.currentView !== 'guest') {
                 this.currentView = this.isLoggedIn ? 'main' : 'guest';
                 this.positionElements();
+                return;
+            }
+
+            // From profile root, Escape follows navigation history, with HOME as last fallback.
+            this.stop();
+            const didNavigateBack = this.game.navigation && typeof this.game.navigation.navigateBack === 'function'
+                ? this.game.navigation.navigateBack()
+                : false;
+
+            if (!didNavigateBack) {
+                this.game.navigateToState(GAME_STATES.HOME);
             }
             return;
         }
@@ -1217,7 +1243,7 @@ export class UserProfileSystem {
                 this.gameSettings = { ...this.gameSettings, ...settings };
             }
         } catch (error) {
-            console.error('Error loading game settings:', error);
+            // Error loading game settings (log removed)
         }
     }
     
@@ -1228,7 +1254,7 @@ export class UserProfileSystem {
         try {
             localStorage.setItem('gameSettings', JSON.stringify(this.gameSettings));
         } catch (error) {
-            console.error('Error saving game settings:', error);
+            // Error saving game settings (log removed)
         }
     }
     
@@ -1239,7 +1265,7 @@ export class UserProfileSystem {
         if (this.gameSettings.hasOwnProperty(setting)) {
             this.gameSettings[setting] = !this.gameSettings[setting];
             this.saveGameSettings();
-            console.log(`${setting} toggled to:`, this.gameSettings[setting]);
+             (`${setting} toggled to:`, this.gameSettings[setting]);
         }
     }
     
@@ -1458,14 +1484,14 @@ export class UserProfileSystem {
         const centerY = this.canvas.height / 2;
         
         // Title
-        ctx.font = 'bold 32px Arial';
+        ctx.font = 'bold 32px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
         ctx.fillText('👤 Profile', centerX, centerY - 180);
         
         // User info
         if (this.currentUser) {
-            ctx.font = '18px Arial';
+            ctx.font = '18px "Segoe UI", Arial, sans-serif';
             ctx.fillStyle = '#a0a0a0';
             const userText = this.currentUser.displayName || this.currentUser.email;
             ctx.fillText(userText, centerX, centerY - 140);
@@ -1491,13 +1517,13 @@ export class UserProfileSystem {
         const centerY = this.canvas.height / 2;
         
         // Title
-        ctx.font = 'bold 32px Arial';
+        ctx.font = 'bold 32px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
         ctx.fillText('👤 Account', centerX, centerY - 180);
         
         // Description
-        ctx.font = '16px Arial';
+        ctx.font = '16px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#a0a0a0';
         ctx.fillText('Sign in to save your progress and compete on leaderboards', centerX, centerY - 140);
         
@@ -1521,7 +1547,7 @@ export class UserProfileSystem {
         const centerY = this.canvas.height / 2;
         
         // Title
-        ctx.font = 'bold 28px Arial';
+        ctx.font = 'bold 28px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
         ctx.fillText('🔑 Sign In', centerX, centerY - 180);
@@ -1541,13 +1567,13 @@ export class UserProfileSystem {
         }
         
         // Register link
-        ctx.font = '14px Arial';
+        ctx.font = '14px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#3b82f6';
         ctx.textAlign = 'center';
         ctx.fillText('Don\'t have an account? Register here', centerX, centerY + 260);
         
         // Play as Guest link
-        ctx.font = '14px Arial';
+        ctx.font = '14px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#10b981';
         ctx.textAlign = 'center';
         ctx.fillText('Or play as guest without saving progress', centerX, centerY + 280);
@@ -1562,7 +1588,7 @@ export class UserProfileSystem {
         const centerY = this.canvas.height / 2;
         
         // Title
-        ctx.font = 'bold 28px Arial';
+        ctx.font = 'bold 28px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
         ctx.fillText('📝 Create Account', centerX, centerY - 200);
@@ -1584,7 +1610,7 @@ export class UserProfileSystem {
         }
         
         // Login link
-        ctx.font = '14px Arial';
+        ctx.font = '14px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#3b82f6';
         ctx.textAlign = 'center';
         ctx.fillText('Already have an account? Sign in here', centerX, centerY + 260);
@@ -1599,7 +1625,7 @@ export class UserProfileSystem {
         const centerY = this.canvas.height / 2;
         
         // Title
-        ctx.font = 'bold 28px Arial';
+        ctx.font = 'bold 28px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#58a6ff';
         ctx.textAlign = 'center';
         ctx.fillText('📊 Your Stats', centerX, centerY - 200);
@@ -1646,13 +1672,13 @@ export class UserProfileSystem {
             ctx.stroke();
             
             // Stat label
-            ctx.font = '14px Arial';
+            ctx.font = '14px "Segoe UI", Arial, sans-serif';
             ctx.fillStyle = '#8b949e';
             ctx.textAlign = 'left';
             ctx.fillText(stat.label, x + 15, y + 25);
             
             // Stat value with color
-            ctx.font = 'bold 20px Arial';
+            ctx.font = 'bold 20px "Segoe UI", Arial, sans-serif';
             ctx.fillStyle = stat.color;
             ctx.fillText(stat.value, x + 15, y + 50);
         });
@@ -1686,7 +1712,7 @@ export class UserProfileSystem {
         
         // Button text
         ctx.fillStyle = '#f0f6fc';
-        ctx.font = 'bold 16px Arial';
+        ctx.font = 'bold 16px "Segoe UI", Arial, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('⬅️ Back', backButton.x + backButton.width / 2, backButton.y + 26);
     }
@@ -1700,21 +1726,21 @@ export class UserProfileSystem {
         const centerY = this.canvas.height / 2;
         
         // Title
-        ctx.font = 'bold 28px Arial';
+        ctx.font = 'bold 28px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#58a6ff';
         ctx.textAlign = 'center';
         ctx.fillText('⚙️ Account Settings', centerX, centerY - 250);
         
         // Current account info
         if (this.currentUser) {
-            ctx.font = '16px Arial';
+            ctx.font = '16px "Segoe UI", Arial, sans-serif';
             ctx.fillStyle = '#8b949e';
             ctx.fillText(`Account: ${this.currentUser.email}`, centerX, centerY - 210);
             ctx.fillText(`Provider: ${this.getAuthProvider().toUpperCase()}`, centerX, centerY - 190);
         }
         
         // Account section
-        ctx.font = 'bold 20px Arial';
+        ctx.font = 'bold 20px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#f0f6fc';
         ctx.textAlign = 'left';
         ctx.fillText('Account Information', centerX - 250, centerY - 150);
@@ -1754,7 +1780,7 @@ export class UserProfileSystem {
         ctx.stroke();
         
         ctx.fillStyle = '#f0f6fc';
-        ctx.font = 'bold 14px Arial';
+        ctx.font = 'bold 14px "Segoe UI", Arial, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('💾 Save', saveButton.x + saveButton.width / 2, saveButton.y + 26);
         
@@ -1781,7 +1807,7 @@ export class UserProfileSystem {
         ctx.stroke();
         
         ctx.fillStyle = '#f0f6fc';
-        ctx.font = 'bold 14px Arial';
+        ctx.font = 'bold 14px "Segoe UI", Arial, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('⬅️ Back', backButton.x + backButton.width / 2, backButton.y + 26);
     }
@@ -1875,8 +1901,8 @@ export class UserProfileSystem {
         const ctx = this.ctx;
         
         // Button animation
-        const scale = hovered ? 1.05 : 1.0;
-        const alpha = hovered ? 1.0 : 0.9;
+        const scale = hovered ? 1.03 : 1.0;
+        const alpha = hovered ? 1.0 : 0.95;
         
         ctx.save();
         ctx.globalAlpha = alpha;
@@ -1894,14 +1920,15 @@ export class UserProfileSystem {
             ctx.shadowOffsetY = 5;
         }
         
-        // Button background with gradient
+        // Main-menu style button background with subtle hover tint
         const gradient = ctx.createLinearGradient(0, 0, 0, button.height);
         if (hovered) {
-            gradient.addColorStop(0, 'rgba(79, 172, 254, 0.9)');
-            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.9)');
+            gradient.addColorStop(0, 'rgba(33, 38, 45, 0.95)');
+            gradient.addColorStop(0.5, 'rgba(88, 166, 255, 0.16)');
+            gradient.addColorStop(1, 'rgba(21, 25, 30, 0.95)');
         } else {
-            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.7)');
-            gradient.addColorStop(1, 'rgba(37, 99, 235, 0.7)');
+            gradient.addColorStop(0, 'rgba(33, 38, 45, 0.88)');
+            gradient.addColorStop(1, 'rgba(21, 25, 30, 0.88)');
         }
         ctx.fillStyle = gradient;
         
@@ -1910,13 +1937,13 @@ export class UserProfileSystem {
         ctx.fill();
         
         // Button border
-        ctx.strokeStyle = hovered ? 'rgba(147, 197, 253, 0.8)' : 'rgba(59, 130, 246, 0.6)';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = hovered ? '#58a6ff' : '#30363d';
+        ctx.lineWidth = hovered ? 2 : 1;
         this.drawRoundedRect(ctx, 0, 0, button.width, button.height, 12);
         ctx.stroke();
         
         // Inner highlight
-        ctx.strokeStyle = hovered ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.2)';
+        ctx.strokeStyle = hovered ? 'rgba(121, 192, 255, 0.35)' : 'rgba(255, 255, 255, 0.12)';
         ctx.lineWidth = 1;
         this.drawRoundedRect(ctx, 1, 1, button.width - 2, button.height - 2, 11);
         ctx.stroke();
@@ -1968,7 +1995,7 @@ export class UserProfileSystem {
             ctx.fill();
             
             // Error message text
-            ctx.font = 'bold 16px Arial';
+            ctx.font = 'bold 16px "Segoe UI", Arial, sans-serif';
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -1985,7 +2012,7 @@ export class UserProfileSystem {
             ctx.fill();
             
             // Success message text
-            ctx.font = 'bold 16px Arial';
+            ctx.font = 'bold 16px "Segoe UI", Arial, sans-serif';
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -2021,7 +2048,7 @@ export class UserProfileSystem {
             ctx.fill();
             
             // Sync message text
-            ctx.font = 'bold 16px Arial';
+            ctx.font = 'bold 16px "Segoe UI", Arial, sans-serif';
             ctx.fillStyle = textColor;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -2055,7 +2082,7 @@ export class UserProfileSystem {
         ctx.restore();
         
         // Loading text
-        ctx.font = '16px Arial';
+        ctx.font = '16px "Segoe UI", Arial, sans-serif';
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
         ctx.fillText('Loading...', centerX, centerY + 60);
@@ -2121,17 +2148,17 @@ export class UserProfileSystem {
      * Save game settings to cloud storage
      */
     async saveGameSettingsToCloud() {
-        if (!this.isLoggedIn || !this.currentUser || !this.firestore) return;
+        if (!this.isLoggedIn || !this.currentUser || !this.database) return;
         
         try {
-            const userRef = this.firestore.collection('users').doc(this.currentUser.uid);
+            const userRef = this.database.ref(`users/${this.currentUser.uid}`);
             await userRef.update({
                 gameSettings: this.gameSettings,
                 lastUpdated: new Date().toISOString()
             });
-            console.log('✅ Game settings saved to cloud');
+             ('✅ Game settings saved to cloud');
         } catch (error) {
-            console.error('❌ Error saving game settings to cloud:', error);
+            // ❌ Error saving game settings to cloud (log removed)
             throw error;
         }
     }
@@ -2140,21 +2167,19 @@ export class UserProfileSystem {
      * Load game settings from cloud storage
      */
     async loadGameSettingsFromCloud() {
-        if (!this.isLoggedIn || !this.currentUser || !this.firestore) return;
+        if (!this.isLoggedIn || !this.currentUser || !this.database) return;
         
         try {
-            const userRef = this.firestore.collection('users').doc(this.currentUser.uid);
-            const doc = await userRef.get();
+            const userRef = this.database.ref(`users/${this.currentUser.uid}`);
+            const snapshot = await userRef.once('value');
+            const data = snapshot.val();
             
-            if (doc.exists) {
-                const data = doc.data();
-                if (data.gameSettings) {
-                    this.gameSettings = { ...this.gameSettings, ...data.gameSettings };
-                    console.log('✅ Game settings loaded from cloud');
-                }
+            if (data && data.gameSettings) {
+                this.gameSettings = { ...this.gameSettings, ...data.gameSettings };
+                 ('✅ Game settings loaded from cloud');
             }
         } catch (error) {
-            console.error('❌ Error loading game settings from cloud:', error);
+            // ❌ Error loading game settings from cloud (log removed)
         }
     }
     
@@ -2207,13 +2232,13 @@ export class UserProfileSystem {
         
         // Title
         ctx.fillStyle = '#f0f6fc';
-        ctx.font = 'bold 20px Arial';
+        ctx.font = 'bold 20px "Segoe UI", Arial, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('🚪 Sign Out', centerX, dialogY + 50);
         
         // Message
         ctx.fillStyle = '#8b949e';
-        ctx.font = '16px Arial';
+        ctx.font = '16px "Segoe UI", Arial, sans-serif';
         ctx.fillText('Are you sure you want to sign out?', centerX, dialogY + 90);
         
         // Buttons
@@ -2233,7 +2258,7 @@ export class UserProfileSystem {
         ctx.stroke();
         
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 14px Arial';
+        ctx.font = 'bold 14px "Segoe UI", Arial, sans-serif';
         ctx.fillText('✓ Yes, Sign Out', confirmX + buttonWidth / 2, buttonY + 26);
         
         // Cancel button
@@ -2248,7 +2273,7 @@ export class UserProfileSystem {
         ctx.stroke();
         
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 14px Arial';
+        ctx.font = 'bold 14px "Segoe UI", Arial, sans-serif';
         ctx.fillText('✕ Cancel', cancelX + buttonWidth / 2, buttonY + 26);
         
         // Store button areas for clicking
@@ -2307,7 +2332,7 @@ export class UserProfileSystem {
         this.game.setGameState(GAME_STATES.PLAYING);
         
         this.showSuccess('Playing as guest!');
-        console.log('👤 Playing as guest');
+         ('👤 Playing as guest');
     }
 
     /**
@@ -2352,7 +2377,7 @@ export class UserProfileSystem {
         // Initialize actualGameCompleted flag
         this.actualGameCompleted = false;
         
-        console.log('📊 Real stats initialized');
+         ('📊 Real stats initialized');
     }
     
     /**
@@ -2372,13 +2397,13 @@ export class UserProfileSystem {
             
             if (success) {
                 this.showMessage('✅ Successfully synced with cloud!', 'success');
-                console.log('☁️ Manual cloud sync completed successfully');
+                 ('☁️ Manual cloud sync completed successfully');
             } else {
                 this.showMessage('⚠️ Cloud sync completed with warnings', 'warning');
-                console.log('☁️ Manual cloud sync completed with issues');
+                 ('☁️ Manual cloud sync completed with issues');
             }
         } catch (error) {
-            console.error('❌ Manual cloud sync failed:', error);
+            // ❌ Manual cloud sync failed (log removed)
             this.showMessage('❌ Failed to sync with cloud', 'error');
         } finally {
             this.loading = false;

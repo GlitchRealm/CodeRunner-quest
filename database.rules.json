@@ -1,0 +1,24 @@
+{
+  "rules": {
+    "userProfiles": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid",
+        ".validate": "newData.hasChildren(['uid', 'email', 'createdAt']) && newData.child('uid').val() === auth.uid"
+      }
+    },
+    "users": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid"
+      }
+    },
+    "userStats": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid",
+        ".validate": "newData.hasChildren() && newData.parent().parent().child('userProfiles').child(auth.uid).exists()"
+      }
+    }
+  }
+}

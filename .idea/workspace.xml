@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="f7fec096-0db5-455f-8db0-0ad76b36aaa4" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/CODE_ANALYSIS.md" beforeDir="false" afterPath="$PROJECT_DIR$/CODE_ANALYSIS.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/config/firebase-config.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/config/firebase-config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/core/Game.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/core/Game.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/core/GameInitialization.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/core/GameInitialization.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/core/GameNavigation.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/core/GameNavigation.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/core/player.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/core/player.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/systems/CloudSaveSystem.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/systems/CloudSaveSystem.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/systems/PowerUpSystem.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/systems/PowerUpSystem.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/systems/ShopSystem.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/systems/ShopSystem.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/systems/UpgradeSystem.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/systems/UpgradeSystem.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/systems/UserProfileSystem.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/systems/UserProfileSystem.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils/PerformanceMonitor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/PerformanceMonitor.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils/constants.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/constants.js" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 2
+}]]></component>
+  <component name="ProjectId" id="31z5S9VN5RDzDBZvuqkYwMGBawk" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "C:/Users/lutaa/OneDrive/Desktop/Coding Projects/CodeRunner"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="f7fec096-0db5-455f-8db0-0ad76b36aaa4" name="Changes" comment="" />
+      <created>1756514057520</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1756514057520</updated>
+    </task>
+    <servers />
+  </component>
+</project>

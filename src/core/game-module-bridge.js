@@ -28,7 +28,7 @@ export function connectRenderingModules(game) {
                 return game.renderer[methodName](...args);
             }
         } catch (error) {
-            console.error(`Error delegating to renderer.${methodName}:`, error);
+            // Error delegating to renderer.${methodName} (log removed)
         }
         
         // Fall back to original method
@@ -43,7 +43,7 @@ export function connectRenderingModules(game) {
                 return game.ui[methodName](...args);
             }
         } catch (error) {
-            console.error(`Error delegating to ui.${methodName}:`, error);
+            // Error delegating to ui.${methodName} (log removed)
         }
         
         // Fall back to original method
@@ -58,7 +58,7 @@ export function connectRenderingModules(game) {
                 return game.dialogs[methodName](...args);
             }
         } catch (error) {
-            console.error(`Error delegating to dialogs.${methodName}:`, error);
+            // Error delegating to dialogs.${methodName} (log removed)
         }
         
         // Fall back to original method

@@ -2,48 +2,23 @@
  * Player - Digital Explorer character
  */
 
-import { GAME_CONFIG, COLORS, TILE_TYPES } from '../utils/constants.js';
-
-// Creative death messages for game over screen
-const DEATH_MESSAGES = [
-    "Disconnected from reality.",
-    "Packet lost... forever.",
-    "NullPointerException: Skill not found.",
-    "You ran into a bug. The bug won.",
-    "Next time, try dodging... just a thought.",
-    "404: Survival not found.",
-    "Too slow for the code flow.",
-    "You glitched so hard, even the error log gave up.",
-    "Firewall 1, You 0.",
-    "Oops. You tried to divide by zero.",
-    "Memory overflow. Game crashed. You included.",
-    "Timeline corrupted. Reboot necessary.",
-    "You have been soft-deleted.",
-    "Speed: fast. Reflexes: not so much.",
-    "Nice try. Still trash though.",
-    "That trap had your IP address.",
-    "You got out-coded.",
-    "You're not a bug... you're just bad.",
-    "Sent to the recycle bin."
-];
+import { GAME_CONFIG, COLORS, TILE_TYPES, DEATH_MESSAGES } from '../utils/constants.js';
 
 export class Player {
     constructor(x, y, game = null, upgrades = null) {
         // Validate and sanitize input parameters
         if (isNaN(x) || x === null || x === undefined) {
-            console.warn('Invalid x position provided to Player constructor:', x);
+            
             x = 0;
         }
         if (isNaN(y) || y === null || y === undefined) {
-            console.warn('Invalid y position provided to Player constructor:', y);
+            
             y = 256;
         }
         if (game && typeof game !== 'object') {
-            console.warn('Invalid game object provided to Player constructor:', game);
             game = null;
         }
         if (upgrades && typeof upgrades !== 'object') {
-            console.warn('Invalid upgrades object provided to Player constructor:', upgrades);
             upgrades = null;
         }
         
@@ -118,6 +93,28 @@ export class Player {
             lastJumpTime: 0,         // Last time jump was performed
             inputBuffer: 0           // Input buffer for responsive controls
         };
+
+        // Wall jump system
+        this.wallJumpState = {
+            isWallSliding: false,     // Currently sliding down a wall
+            wallSide: 0,             // -1 for left wall, 1 for right wall, 0 for no wall
+            wallJumpCooldown: 0,     // Cooldown between wall jumps
+            wallSlideSpeed: 0,       // Current wall slide speed
+            lastWallJumpTime: 0,     // Last time wall jump was performed
+            wallJumpDirection: 0,    // Direction of last wall jump
+            wallStickTime: 0,        // Time spent against wall for stick effect
+            canWallJump: true        // Whether wall jump is available
+        };
+
+        // Ground pound system
+        this.groundPoundState = {
+            isGroundPounding: false,  // Currently performing ground pound
+            groundPoundSpeed: 0,      // Current downward speed during ground pound
+            groundPoundCooldown: 0,   // Cooldown between ground pounds
+            canGroundPound: true,     // Whether ground pound is available
+            justLanded: false,        // Just landed from ground pound
+            landingEffectTimer: 0     // Timer for landing effects
+        };
         
         this.health = GAME_CONFIG.PLAYER_HEALTH + this.shopUpgrades.extraHealth;
         this.maxHealth = this.health;
@@ -156,11 +153,9 @@ export class Player {
         try {
             // Validate input parameters
             if (!deltaTime || isNaN(deltaTime) || deltaTime <= 0) {
-                console.warn('Invalid deltaTime provided to Player.update:', deltaTime);
                 deltaTime = 16.67; // Default to 60fps frame time
             }
             if (!inputKeys || typeof inputKeys !== 'object') {
-                console.warn('Invalid inputKeys provided to Player.update:', inputKeys);
                 inputKeys = {}; // Default to empty object
             }
             
@@ -178,6 +173,12 @@ export class Player {
         // This prevents the race condition where double jump reset happens after input processing
         this.updateMovement(deltaSeconds, inputKeys);
         this.updatePhysics(deltaSeconds, physicsEngine);
+        
+        // Update wall detection and wall sliding
+        this.updateWallInteraction(deltaTime, physicsEngine);
+        
+        // Update ground pound system
+        this.updateGroundPound(deltaTime, physicsEngine);
         
         // Process jump input AFTER physics update to ensure correct ground state
         this.updateJumping(inputKeys, deltaTime);
@@ -219,7 +220,7 @@ export class Player {
         }
         
         } catch (error) {
-            console.error('Error in Player.update:', error);
+            // Error in Player.update (log removed)
             // Reset player to safe state if update fails
             this.x = Math.max(0, this.x || 64);
             this.y = Math.max(0, this.y || 276);
@@ -293,14 +294,24 @@ export class Player {
             this.dashState.dashCooldown <= 0 && !this.dashState.isDashing) {
             this.handleDashInput(deltaTime);
             return; // Don't process jump when dash is triggered
-        }        // Update jump state efficiently
+        }
+
+        // Handle ground pound - triggered by Down + Jump when in air
+        if (!this.onGround && inputKeys.down && jumpPressed && 
+            !this.groundPoundState.isGroundPounding && 
+            this.groundPoundState.groundPoundCooldown <= 0) {
+            this.performGroundPound();
+            return; // Don't process normal jump when ground pound is triggered
+        }
+
+        // Update jump state efficiently
         this.jumpState.justPressed = jumpPressed && !this.jumpState.wasPressed;
         this.jumpState.wasPressed = jumpPressed;
         
         // Add input to buffer when jump is pressed (for both ground and air)
         if (this.jumpState.justPressed) {
             this.jumpState.inputBuffer = 150; // 150ms buffer for responsive controls
-            console.debug(`Jump input detected - onGround: ${this.onGround}, airTime: ${this.jumpState.airTime}ms`);
+           
         }
         
         // Update input buffer countdown
@@ -316,19 +327,27 @@ export class Player {
             this.performJump();
             this.jumpState.inputBuffer = 0; // Consume the buffered input
         } else if (hasBufferedJump && !this.onGround) {
-            // Check for double jump availability (either basic double jump or air boost)
-            const hasDoubleJump = this.shopUpgrades.doubleJump || this.shopUpgrades.airBoostLevel > 0;
-            
-            if (hasDoubleJump && this.jumpState.doubleJumpAvailable) {
-                // Double jump - only if available this air session
-                const success = this.performDoubleJump();
+            // Check for wall jump first (highest priority in air)
+            if (this.wallJumpState.isWallSliding && this.wallJumpState.canWallJump) {
+                const success = this.performWallJump();
                 if (success) {
-                    this.jumpState.inputBuffer = 0; // Only consume input if jump was successful
+                    this.jumpState.inputBuffer = 0; // Consume the buffered input
                 }
-            } else if (this.jumpState.airTime < 100) {
-                // Coyote time - 100ms grace period for late jumps
-                this.performJump();
-                this.jumpState.inputBuffer = 0; // Consume the buffered input
+            } else {
+                // Check for double jump availability (either basic double jump or air boost)
+                const hasDoubleJump = this.shopUpgrades.doubleJump || this.shopUpgrades.airBoostLevel > 0;
+                
+                if (hasDoubleJump && this.jumpState.doubleJumpAvailable) {
+                    // Double jump - only if available this air session
+                    const success = this.performDoubleJump();
+                    if (success) {
+                        this.jumpState.inputBuffer = 0; // Only consume input if jump was successful
+                    }
+                } else if (this.jumpState.airTime < 100) {
+                    // Coyote time - 100ms grace period for late jumps
+                    this.performJump();
+                    this.jumpState.inputBuffer = 0; // Consume the buffered input
+                }
             }
         }
           // Track air time for coyote time using actual frame time
@@ -381,6 +400,332 @@ export class Player {
         }
     }
     
+    /**
+     * Update wall interaction including wall detection, sliding, and wall jump availability
+     */
+    updateWallInteraction(deltaTime, physicsEngine) {
+        // Disable wall interactions during quantum dash or regular dash
+        if (this.quantumDashActive || this.dashState.isDashing) {
+            this.resetWallState();
+            return;
+        }
+
+        // Update wall jump cooldown
+        if (this.wallJumpState.wallJumpCooldown > 0) {
+            this.wallJumpState.wallJumpCooldown -= deltaTime;
+        }
+
+        // Only check for walls when in the air
+        if (!this.onGround && physicsEngine) {
+            this.detectWalls(physicsEngine);
+            
+            if (this.wallJumpState.isWallSliding) {
+                this.updateWallSliding(deltaTime);
+            }
+        } else {
+            this.resetWallState();
+        }
+    }
+
+    /**
+     * Detect walls adjacent to the player for wall sliding and jumping
+     */
+    detectWalls(physicsEngine) {
+        const wallDetectionDistance = GAME_CONFIG.WALL_DETECTION_DISTANCE;
+        let wallSide = 0;
+
+        // Check for wall on the right
+        const rightCollision = physicsEngine.checkCollision(
+            this.x + this.width, this.y + 5, wallDetectionDistance, this.height - 10, 0, false
+        );
+
+        // Check for wall on the left
+        const leftCollision = physicsEngine.checkCollision(
+            this.x - wallDetectionDistance, this.y + 5, wallDetectionDistance, this.height - 10, 0, false
+        );
+
+        if (rightCollision.collision && this.vx >= 0) {
+            wallSide = 1; // Right wall
+        } else if (leftCollision.collision && this.vx <= 0) {
+            wallSide = -1; // Left wall
+        }
+
+        // Update wall state
+        if (wallSide !== 0) {
+            if (!this.wallJumpState.isWallSliding) {
+                // Just started wall sliding
+                this.wallJumpState.isWallSliding = true;
+                this.wallJumpState.wallSide = wallSide;
+                this.wallJumpState.wallStickTime = GAME_CONFIG.WALL_STICK_TIME;
+                this.wallJumpState.wallSlideSpeed = 0;
+                this.wallJumpState.canWallJump = true;
+            }
+        } else {
+            this.resetWallState();
+        }
+    }
+
+    /**
+     * Update wall sliding physics and effects
+     */
+    updateWallSliding(deltaTime) {
+        // Stick to wall for a brief moment before sliding
+        if (this.wallJumpState.wallStickTime > 0) {
+            this.wallJumpState.wallStickTime -= deltaTime;
+            this.vy = Math.min(this.vy, 50); // Reduce fall speed while sticking
+        } else {
+            // Apply wall slide physics
+            this.wallJumpState.wallSlideSpeed = Math.min(
+                this.wallJumpState.wallSlideSpeed + (GAME_CONFIG.GRAVITY * deltaTime / 1000),
+                GAME_CONFIG.WALL_SLIDE_SPEED
+            );
+            this.vy = this.wallJumpState.wallSlideSpeed;
+        }
+
+        // Create wall slide particles occasionally
+        if (Math.random() < 0.3) {
+            this.createWallSlideParticle();
+        }
+    }
+
+    /**
+     * Reset wall interaction state
+     */
+    resetWallState() {
+        this.wallJumpState.isWallSliding = false;
+        this.wallJumpState.wallSide = 0;
+        this.wallJumpState.wallStickTime = 0;
+        this.wallJumpState.wallSlideSpeed = 0;
+    }
+
+    /**
+     * Perform wall jump with proper physics and effects
+     */
+    performWallJump() {
+        if (!this.wallJumpState.canWallJump || 
+            !this.wallJumpState.isWallSliding || 
+            this.wallJumpState.wallJumpCooldown > 0) {
+            return false;
+        }
+
+        // Play wall jump sound
+        if (this.game && this.game.audioSystem) {
+            this.game.audioSystem.onJump(); // Reuse jump sound for now
+        }
+
+        // Apply wall jump physics
+        this.vy = GAME_CONFIG.WALL_JUMP_POWER;
+        this.vx = -this.wallJumpState.wallSide * GAME_CONFIG.WALL_JUMP_HORIZONTAL;
+
+        // Set cooldown and state
+        this.wallJumpState.wallJumpCooldown = GAME_CONFIG.WALL_JUMP_COOLDOWN;
+        this.wallJumpState.lastWallJumpTime = Date.now();
+        this.wallJumpState.wallJumpDirection = -this.wallJumpState.wallSide;
+        this.wallJumpState.canWallJump = false;
+
+        // Create wall jump particles
+        this.createWallJumpParticles();
+
+        // Reset wall state
+        this.resetWallState();
+
+     
+        return true;
+    }
+
+    /**
+     * Create particle effect for wall sliding
+     */
+    createWallSlideParticle() {
+        if (!this.dashEffects) return;
+
+        const particleX = this.wallJumpState.wallSide > 0 
+            ? this.x + this.width 
+            : this.x;
+        const particleY = this.y + this.height * 0.7 + (Math.random() - 0.5) * 20;
+
+        this.dashEffects.particles.push({
+            x: particleX,
+            y: particleY,
+            vx: -this.wallJumpState.wallSide * (20 + Math.random() * 30),
+            vy: Math.random() * 50 + 50,
+            size: 1 + Math.random() * 2,
+            life: 1.0,
+            maxLife: 300 + Math.random() * 200,
+            color: ['#888888', '#aaaaaa', '#666666'],
+            type: 'wallSlide'
+        });
+    }
+
+    /**
+     * Create particle effect for wall jump
+     */
+    createWallJumpParticles() {
+        if (!this.dashEffects) return;
+
+        const particleX = this.wallJumpState.wallSide > 0 
+            ? this.x + this.width 
+            : this.x;
+        const centerY = this.y + this.height / 2;
+
+        // Create burst of particles
+        for (let i = 0; i < 8; i++) {
+            this.dashEffects.particles.push({
+                x: particleX,
+                y: centerY + (Math.random() - 0.5) * this.height,
+                vx: -this.wallJumpState.wallSide * (50 + Math.random() * 100),
+                vy: (Math.random() - 0.5) * 100,
+                size: 2 + Math.random() * 3,
+                life: 1.0,
+                maxLife: 500 + Math.random() * 300,
+                color: ['#00ff88', '#88ff00', '#ffff00'],
+                type: 'wallJump'
+            });
+        }
+    }
+    
+    /**
+     * Update ground pound system including cooldowns and physics
+     */
+    updateGroundPound(deltaTime, physicsEngine) {
+        // Update ground pound cooldown
+        if (this.groundPoundState.groundPoundCooldown > 0) {
+            this.groundPoundState.groundPoundCooldown -= deltaTime;
+        }
+
+        // Update landing effect timer
+        if (this.groundPoundState.landingEffectTimer > 0) {
+            this.groundPoundState.landingEffectTimer -= deltaTime;
+        }
+
+        // Handle active ground pound
+        if (this.groundPoundState.isGroundPounding) {
+            // Apply ground pound physics
+            this.vy = GAME_CONFIG.GROUND_POUND_SPEED;
+            
+            // Check if we've landed
+            if (this.onGround) {
+                this.landFromGroundPound();
+            }
+        }
+    }
+
+    /**
+     * Perform ground pound attack
+     */
+    performGroundPound() {
+        if (this.onGround || this.groundPoundState.groundPoundCooldown > 0) {
+            return false;
+        }
+
+        // Play ground pound sound
+        if (this.game && this.game.audioSystem) {
+            this.game.audioSystem.onJump(); // Reuse jump sound for now, can be changed later
+        }
+
+        // Set ground pound state
+        this.groundPoundState.isGroundPounding = true;
+        this.groundPoundState.groundPoundSpeed = GAME_CONFIG.GROUND_POUND_SPEED;
+        this.groundPoundState.canGroundPound = false;
+
+        // Apply immediate downward force
+        this.vy = GAME_CONFIG.GROUND_POUND_FORCE;
+
+        // Create ground pound particles
+        this.createGroundPoundParticles();
+        return true;
+    }
+
+    /**
+     * Handle landing from ground pound
+     */
+    landFromGroundPound() {
+        if (!this.groundPoundState.isGroundPounding) return;
+
+        // Reset ground pound state
+        this.groundPoundState.isGroundPounding = false;
+        this.groundPoundState.justLanded = true;
+        this.groundPoundState.landingEffectTimer = GAME_CONFIG.SCREEN_SHAKE_DURATION;
+        this.groundPoundState.groundPoundCooldown = GAME_CONFIG.GROUND_POUND_COOLDOWN;
+
+        // Trigger screen shake effect
+        if (this.game && this.game.camera) {
+            this.game.camera.startScreenShake(
+                GAME_CONFIG.SCREEN_SHAKE_DURATION,
+                GAME_CONFIG.SCREEN_SHAKE_INTENSITY
+            );
+        }
+
+        // Create landing impact particles
+        this.createGroundPoundLandingParticles();
+
+        // Damage nearby obstacles (future enhancement)
+        this.applyGroundPoundDamage();
+
+
+    }
+
+    /**
+     * Create particle effect for ground pound initiation
+     */
+    createGroundPoundParticles() {
+        if (!this.dashEffects) return;
+
+        const centerX = this.x + this.width / 2;
+        const centerY = this.y + this.height / 2;
+
+        // Create downward particles
+        for (let i = 0; i < 6; i++) {
+            this.dashEffects.particles.push({
+                x: centerX + (Math.random() - 0.5) * this.width,
+                y: centerY,
+                vx: (Math.random() - 0.5) * 100,
+                vy: 100 + Math.random() * 100,
+                size: 2 + Math.random() * 3,
+                life: 1.0,
+                maxLife: 400 + Math.random() * 200,
+                color: ['#ff4444', '#ff8844', '#ffaa00'],
+                type: 'groundPound'
+            });
+        }
+    }
+
+    /**
+     * Create particle effect for ground pound landing
+     */
+    createGroundPoundLandingParticles() {
+        if (!this.dashEffects) return;
+
+        const centerX = this.x + this.width / 2;
+        const groundY = this.y + this.height;
+
+        // Create impact burst particles
+        for (let i = 0; i < 12; i++) {
+            const angle = (i / 12) * Math.PI * 2;
+            const speed = 80 + Math.random() * 120;
+
+            this.dashEffects.particles.push({
+                x: centerX,
+                y: groundY,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 50, // Slight upward bias
+                size: 3 + Math.random() * 4,
+                life: 1.0,
+                maxLife: 600 + Math.random() * 400,
+                color: ['#ffff00', '#ff8800', '#ff4400', '#ffffff'],
+                type: 'groundPoundLanding'
+            });
+        }
+    }
+
+    /**
+     * Apply damage to nearby obstacles (placeholder for future enhancement)
+     */
+    applyGroundPoundDamage() {
+        // Future enhancement: damage destructible obstacles in radius
+        // For now, just provide visual feedback
+    }
+    
     updateHealthSystem(deltaTime) {
         if (this.invulnerabilityTime > 0) {
             this.invulnerabilityTime -= deltaTime;
@@ -425,18 +770,18 @@ export class Player {
     }
     
     takeDamage(amount, source) {
-        console.log(`💥 takeDamage called: amount=${amount}, source=${source}`);
-        console.log(`🔍 Current health: ${this.health}`);
-        console.log(`🔍 Invulnerability time: ${this.invulnerabilityTime}`);
+         (`💥 takeDamage called: amount=${amount}, source=${source}`);
+         (`🔍 Current health: ${this.health}`);
+         (`🔍 Invulnerability time: ${this.invulnerabilityTime}`);
         
         if (this.invulnerabilityTime > 0) {
-            console.log(`🛡️ Damage blocked by invulnerability frames`);
+             (`🛡️ Damage blocked by invulnerability frames`);
             return;
         }
         
         // Check if player is in quantum dash (invulnerable)
         if (this.quantumDashActive) {
-            console.log('⚡ Damage blocked by Quantum Dash invulnerability!');
+             ('⚡ Damage blocked by Quantum Dash invulnerability!');
             return;
         }
         
@@ -444,11 +789,11 @@ export class Player {
         if (this.game && this.game.powerUpSystem) {
             const shieldResult = this.game.powerUpSystem.onPlayerDamage();
             if (shieldResult.absorbed) {
-                console.log('🛡️ Shield absorbed damage in takeDamage - returning early');
+                 ('🛡️ Shield absorbed damage in takeDamage - returning early');
                 
                 // Grant invulnerability frames if the shield requests it
                 if (shieldResult.grantInvulnerability) {
-                    console.log('🛡️ Granting invulnerability frames after shield absorption');
+                     ('🛡️ Granting invulnerability frames after shield absorption');
                     this.invulnerabilityTime = GAME_CONFIG.INVULNERABILITY_DURATION;
                     this.lastDamageTime = Date.now();
                 }
@@ -457,9 +802,9 @@ export class Player {
             }
         }
         
-        console.log(`💔 No protection active - applying ${amount} damage`);
+         (`💔 No protection active - applying ${amount} damage`);
         this.health -= amount;
-        console.log(`💔 Health after damage: ${this.health}`);
+         (`💔 Health after damage: ${this.health}`);
         this.invulnerabilityTime = GAME_CONFIG.INVULNERABILITY_DURATION;
         this.lastDamageTime = Date.now();
         
@@ -478,7 +823,7 @@ export class Player {
             color: '#ff4444'
         });
           if (this.health <= 0) {
-            console.log(`💀 Health <= 0, calling die(${source})`);
+             (`💀 Health <= 0, calling die(${source})`);
             this.die(source);
         } else if (this.health === 1 && this.game && this.game.tutorialSystem) {
             // Show low health hint when player has only 1 health left
@@ -526,7 +871,7 @@ export class Player {
                 // Add score when collecting data packet
                 if (this.game) {
                     this.game.score += 10;
-                    console.log(`📦 Data packet collected! +10 score (Total: ${this.game.score})`);
+                     (`📦 Data packet collected! +10 score (Total: ${this.game.score})`);
                 }
                 
                 // Create collection effect
@@ -601,6 +946,11 @@ export class Player {
         
         // Draw main player body with quality-based effects
         this.drawPlayerBody(ctx, screenX, screenY, graphicsQuality);
+        
+        // Draw wall slide visual indicators
+        if (this.wallJumpState.isWallSliding) {
+            this.drawWallSlideEffects(ctx, screenX, screenY, graphicsQuality);
+        }
         
         // Draw additional visual effects based on quality
         if (graphicsQuality === 'high') {
@@ -890,24 +1240,24 @@ export class Player {
         
         // Multiple validation checks for double jump availability
         if (!hasDoubleJump) {
-            console.debug('Double jump failed: No upgrade available');
+           
             return false;
         }
         
         if (this.onGround) {
-            console.debug('Double jump failed: Player is on ground');
+          
             return false;
         }
         
         // Check if player has already used their double jump for this air session
         if (!this.jumpState.doubleJumpAvailable) {
-            console.debug('Double jump failed: Already used this air session');
+           
             return false;
         }
         
         // Additional safety check: ensure we're actually in the air for some minimum time
         if (this.jumpState.airTime < 50) {
-            console.debug('Double jump failed: Not enough air time (possible ground state race condition)');
+           
             return false;
         }
         
@@ -946,7 +1296,6 @@ export class Player {
         
         // Debug logging for double jump reset
         if (!wasDoubleJumpAvailable && this.jumpState.doubleJumpAvailable) {
-            console.debug('Double jump reset: Now available for next air session');
         }
     }
       /**
@@ -955,18 +1304,18 @@ export class Player {
     loadSelectedSprite() {
         let selectedSprite = 'player-sprite.png'; // Default sprite
         
-        console.log('🎭 Loading selected sprite...');
-        console.log('🎭 ProfileManager available:', !!(typeof window !== 'undefined' && window.profileManager));
+         ('🎭 Loading selected sprite...');
+         ('🎭 ProfileManager available:', !!(typeof window !== 'undefined' && window.profileManager));
         
         // Try to get selected sprite from profile manager
         if (typeof window !== 'undefined' && window.profileManager) {
             selectedSprite = window.profileManager.getSelectedSprite();
-            console.log('🎭 Sprite from ProfileManager:', selectedSprite);
+             ('🎭 Sprite from ProfileManager:', selectedSprite);
           
             // Ensure we're getting a valid sprite name
             if (!selectedSprite || typeof selectedSprite !== 'string') {
                 selectedSprite = 'player-sprite.png';
-                console.log('🎭 Invalid sprite from ProfileManager, using default');
+                 ('🎭 Invalid sprite from ProfileManager, using default');
             }
         } else {
             // Fallback: try to get from localStorage directly
@@ -974,15 +1323,14 @@ export class Player {
                 const savedSprite = localStorage.getItem('coderunner_selected_sprite');
                 if (savedSprite && typeof savedSprite === 'string') {
                     selectedSprite = savedSprite;
-                    console.log('🎭 Sprite from localStorage:', selectedSprite);
+                     ('🎭 Sprite from localStorage:', selectedSprite);
                 }
             } catch (error) {
-                console.warn('⚠️ Failed to load sprite from localStorage:', error);
             }
             
             // If profile manager isn't ready yet, retry after a short delay
             if (typeof window !== 'undefined' && !window.profileManager) {
-                console.log('🎭 ProfileManager not ready, retrying in 200ms...');
+                 ('🎭 ProfileManager not ready, retrying in 200ms...');
                 setTimeout(() => this.loadSelectedSprite(), 200);
                 return;
             }
@@ -1001,9 +1349,9 @@ export class Player {
             spritePath = `./assets/${selectedSprite}`;
         }
         
-        console.log(`🎮 Loading sprite: ${selectedSprite} from ${spritePath}`);
-        console.log(`🎮 Current sprite src: ${this.sprite.src}`);
-        console.log(`🎮 Target sprite path: ${spritePath}`);
+         (`🎮 Loading sprite: ${selectedSprite} from ${spritePath}`);
+         (`🎮 Current sprite src: ${this.sprite.src}`);
+         (`🎮 Target sprite path: ${spritePath}`);
         
         // Use changeSprite to properly handle sprite loading state
         this.changeSprite(spritePath);
@@ -1030,39 +1378,39 @@ export class Player {
         const currentFilename = this.sprite.src ? this.sprite.src.split('/').pop() : '';
         const newFilename = spritePath ? spritePath.split('/').pop() : '';
         
-        console.log(`🎮 changeSprite called with: ${spritePath}`);
-        console.log(`🎮 Current sprite file: ${currentFilename}`);
-        console.log(`🎮 New sprite file: ${newFilename}`);
-        console.log(`🎮 Sprite already loaded: ${this.spriteLoaded}`);
+         (`🎮 changeSprite called with: ${spritePath}`);
+         (`🎮 Current sprite file: ${currentFilename}`);
+         (`🎮 New sprite file: ${newFilename}`);
+         (`🎮 Sprite already loaded: ${this.spriteLoaded}`);
         
         // Don't reload if it's the same sprite file and it's already loaded
         if (currentFilename === newFilename && this.spriteLoaded) {
-            console.log(`🎮 Same sprite already loaded, skipping: ${newFilename}`);
+             (`🎮 Same sprite already loaded, skipping: ${newFilename}`);
             return;
         }
         
         const previousSrc = this.sprite.src;
         this.spriteLoaded = false;
         
-        console.log(`🎮 Starting sprite load: ${spritePath}`);
+         (`🎮 Starting sprite load: ${spritePath}`);
           
         // Set up new load handlers
         this.sprite.onload = () => {
             this.spriteLoaded = true;
-            console.log(`✅ Sprite loaded successfully: ${spritePath}`);
+             (`✅ Sprite loaded successfully: ${spritePath}`);
         };
           
         this.sprite.onerror = (error) => {
-            console.error(`❌ Failed to load sprite: ${spritePath}`, error);
+            // ❌ Failed to load sprite: ${spritePath} (log removed)
             this.spriteLoaded = false;
             // Try the default instead
             if (!previousSrc.endsWith('player-sprite.png')) {
-                console.log(`🔄 Trying default sprite: ./assets/player-sprite.png`);
+                 (`🔄 Trying default sprite: ./assets/player-sprite.png`);
                 this.sprite.src = './assets/player-sprite.png';
             }
         };
         
-        console.log(`🔄 Setting sprite.src to: ${spritePath}`);
+         (`🔄 Setting sprite.src to: ${spritePath}`);
         this.sprite.src = spritePath;
     }
 
@@ -1113,7 +1461,7 @@ export class Player {
             this.game.audioSystem.onJump(); // Reuse jump sound for now
         }
 
-        console.log(`🏃‍♂️ Started smooth dash (module level ${level})`);
+         (`🏃‍♂️ Started smooth dash (module level ${level})`);
     }    /**
      * Update dash state and apply dash movement
      */
@@ -1132,9 +1480,9 @@ export class Player {
             const dashMovement = this.dashState.dashSpeed * (deltaTime / 1000);
             
             // Check for collision before moving
-            if (this.game && this.game.physicsEngine) {
+            if (this.game && this.game.physics) {
                 const newX = this.x + dashMovement;
-                const collision = this.game.physicsEngine.checkCollision(
+                const collision = this.game.physics.checkCollision(
                     newX, this.y, this.width, this.height, 1, false
                 );
                 
@@ -1188,7 +1536,7 @@ export class Player {
             this.game.audioSystem.onJump(); // Reuse dash sound for now
         }
 
-        console.log(`🏃‍♂️ Started simple smooth dash`);
+         (`🏃‍♂️ Started simple smooth dash`);
     }
 
     /**
@@ -1422,5 +1770,83 @@ export class Player {
         return result ? 
             `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` :
             '255, 255, 255';
+    }
+
+    /**
+     * Draw wall slide visual effects including sparks and indicators
+     */
+    drawWallSlideEffects(ctx, screenX, screenY, graphicsQuality = 'medium') {
+        ctx.save();
+        
+        // Determine wall side for effect positioning
+        const wallSide = this.wallJumpState.wallSide;
+        const effectX = wallSide > 0 ? screenX + this.width : screenX;
+        const centerY = screenY + this.height / 2;
+        
+        // Draw wall slide indicator line
+        const lineLength = graphicsQuality === 'high' ? 30 : 20;
+        const lineOffset = wallSide * 8;
+        
+        ctx.strokeStyle = this.wallJumpState.wallStickTime > 0 ? '#ffff00' : '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.7;
+        
+        // Draw vertical line indicating wall contact
+        ctx.beginPath();
+        ctx.moveTo(effectX + lineOffset, centerY - lineLength / 2);
+        ctx.lineTo(effectX + lineOffset, centerY + lineLength / 2);
+        ctx.stroke();
+        
+        // Draw wall slide sparks
+        if (this.wallJumpState.wallStickTime <= 0 && Math.random() < 0.5) {
+            const sparkCount = graphicsQuality === 'high' ? 3 : 2;
+            
+            for (let i = 0; i < sparkCount; i++) {
+                const sparkX = effectX + (Math.random() - 0.5) * 10;
+                const sparkY = centerY + (Math.random() - 0.5) * this.height * 0.8;
+                
+                ctx.fillStyle = `hsl(${Math.random() * 60 + 30}, 100%, 70%)`; // Yellow to orange sparks
+                ctx.globalAlpha = 0.8;
+                
+                ctx.beginPath();
+                ctx.arc(sparkX, sparkY, 1 + Math.random() * 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Draw wall jump readiness indicator
+        if (this.wallJumpState.canWallJump && this.wallJumpState.wallJumpCooldown <= 0) {
+            const pulseIntensity = 0.5 + 0.5 * Math.sin(Date.now() * 0.01);
+            
+            ctx.fillStyle = `rgba(0, 255, 136, ${0.3 * pulseIntensity})`;
+            ctx.globalAlpha = pulseIntensity;
+            
+            // Draw jump readiness glow
+            const glowSize = 15 + 5 * pulseIntensity;
+            ctx.beginPath();
+            ctx.arc(effectX, centerY, glowSize, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw directional arrow indicating jump direction
+            if (graphicsQuality !== 'low') {
+                ctx.strokeStyle = '#00ff88';
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = pulseIntensity;
+                
+                const arrowSize = 8;
+                const arrowX = screenX + this.width / 2;
+                const arrowY = centerY - this.height / 4;
+                const direction = -wallSide;
+                
+                ctx.beginPath();
+                ctx.moveTo(arrowX, arrowY);
+                ctx.lineTo(arrowX + direction * arrowSize, arrowY - arrowSize);
+                ctx.moveTo(arrowX, arrowY);
+                ctx.lineTo(arrowX + direction * arrowSize, arrowY + arrowSize);
+                ctx.stroke();
+            }
+        }
+        
+        ctx.restore();
     }
 }

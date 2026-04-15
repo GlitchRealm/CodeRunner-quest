@@ -1,9 +1,10 @@
 /**
- * Performance Monitor - Tracks and reports performance metrics
+ * Performance Monitor - Tracks and reports performance metrics with auto-optimization
  */
 
 export class PerformanceMonitor {
-    constructor() {
+    constructor(game = null) {
+        this.game = game;
         this.metrics = {
             frameTime: [],
             updateTime: [],
@@ -15,6 +16,7 @@ export class PerformanceMonitor {
         
         this.thresholds = {
             lowFPS: 30,
+            criticalFPS: 15,
             highFrameTime: 33.33, // 30fps
             memoryWarning: 100 * 1024 * 1024, // 100MB
             maxHistorySize: 100
@@ -25,6 +27,30 @@ export class PerformanceMonitor {
             highFrameTimeCount: 0,
             memoryWarningCount: 0
         };
+        
+        // Auto-optimization features
+        this.optimizationsActive = new Set();
+        this.lastOptimizationCheck = 0;
+        this.optimizationCheckInterval = 5000; // Check every 5 seconds
+        
+        this.initializeMonitoring();
+    }
+
+    /**
+     * Initialize performance monitoring
+     */
+    initializeMonitoring() {
+         ('Performance monitoring initialized');
+        
+        // Add debug commands for performance testing
+        if (typeof window !== 'undefined') {
+            window.gamePerformance = {
+                getStats: () => this.getComprehensiveStats(),
+                enableOptimizations: () => this.enableAllOptimizations(),
+                disableOptimizations: () => this.disableAllOptimizations(),
+                forceOptimization: (level) => this.forceOptimizationLevel(level)
+            };
+        }
     }
 
     /**
@@ -49,7 +75,7 @@ export class PerformanceMonitor {
                 this.checkMemoryUsage();
             }
         } catch (error) {
-            console.error('Error recording performance metrics:', error);
+            // Error recording performance metrics (log removed)
         }
     }
 

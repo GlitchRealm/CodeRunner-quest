@@ -31,7 +31,7 @@ export class PopupSystem {
             type: 'loading',
             title: 'Loading',
             message: message,
-            icon: '💾',
+            icon: 'LOADING',
             buttons: [],
             canClose: false,
             timestamp: Date.now()
@@ -51,7 +51,7 @@ export class PopupSystem {
             type: 'confirmation',
             title: title,
             message: message,
-            icon: '✓',
+            icon: 'OK',
             buttons: [
                 {
                     text: 'OK',
@@ -78,7 +78,7 @@ export class PopupSystem {
             type: 'error',
             title: title,
             message: message,
-            icon: '⚠',
+            icon: 'ERROR',
             buttons: [
                 {
                     text: 'OK',
@@ -296,7 +296,9 @@ export class PopupSystem {
         ctx.textAlign = 'left';
         
         // Title with icon
-        const titleText = `${this.activePopup.icon} ${this.activePopup.title}`;
+    // Render title without leading emoji/glyphs; icon may be a plain label or empty
+    const iconLabel = this.activePopup.icon ? `${this.activePopup.icon} ` : '';
+    const titleText = `${iconLabel}${this.activePopup.title}`;
         ctx.fillText(titleText, popupX + 20, popupY + 32);
         
         // Draw message
@@ -525,14 +527,15 @@ export class PopupSystem {
      * Get icon for popup type
      */
     getIconForType(type) {
+        // Return plain-text labels instead of emoji to avoid icons in UI
         const icons = {
-            'info': 'ℹ️',
-            'success': '✅',
-            'error': '❌',
-            'warning': '⚠️',
-            'loading': '💾'
+            'info': 'INFO',
+            'success': 'SUCCESS',
+            'error': 'ERROR',
+            'warning': 'WARNING',
+            'loading': 'LOADING'
         };
-        return icons[type] || 'ℹ️';
+        return icons[type] || 'INFO';
     }
     
     /**

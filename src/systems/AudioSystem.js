@@ -38,11 +38,11 @@ export class AudioSystem {
     loadSettings() {
         try {
             const saved = localStorage.getItem('coderunner_audio_settings');
-            console.log('🎵 Loading audio settings:', saved);
+             ('🎵 Loading audio settings:', saved);
             
             if (saved) {
                 const settings = JSON.parse(saved);
-                console.log('🎵 Parsed audio settings:', settings);
+                 ('🎵 Parsed audio settings:', settings);
                 
                 // Load volume settings
                 if (settings.masterVolume !== undefined) {
@@ -69,14 +69,14 @@ export class AudioSystem {
                 
                 // Force unmuted state
                 this.isMuted = false;
-                console.log('🎵 Audio settings loaded - forced unmuted state:', {
+                 ('🎵 Audio settings loaded - forced unmuted state:', {
                     masterVolume: this.masterVolume,
                     sfxVolume: this.sfxVolume,
                     musicVolume: this.musicVolume,
                     isMuted: this.isMuted
                 });
             } else {
-                console.log('🎵 No saved audio settings found, using defaults');
+                 ('🎵 No saved audio settings found, using defaults');
                 this.isMuted = false; // Ensure default is unmuted
             }
         } catch (error) {
@@ -89,7 +89,7 @@ export class AudioSystem {
     initAudioContext() {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            console.log('🎵 Audio context created successfully');
+             ('🎵 Audio context created successfully');
         } catch (e) {
             console.warn('🎵 Could not create audio context:', e);
         }
@@ -102,8 +102,8 @@ export class AudioSystem {
         const enableAudio = () => {
             if (!this.userInteracted) {
                 this.userInteracted = true;
-                console.log('🎵 User interaction detected, enabling audio');
-                console.log('🎵 Current audio state:', {
+                 ('🎵 User interaction detected, enabling audio');
+                 ('🎵 Current audio state:', {
                     isMuted: this.isMuted,
                     audioInitialized: this.audioInitialized,
                     musicMode: this.musicMode,
@@ -113,11 +113,11 @@ export class AudioSystem {
                 // Resume audio context if suspended
                 if (this.audioContext && this.audioContext.state === 'suspended') {
                     this.audioContext.resume().then(() => {
-                        console.log('🎵 Audio context resumed');
+                         ('🎵 Audio context resumed');
                         this.audioInitialized = true;
                         // Start music if not muted
                         if (!this.isMuted && this.music[this.musicMode]) {
-                            console.log('🎵 Starting music after audio context resume');
+                             ('🎵 Starting music after audio context resume');
                             this.playMusic(this.musicMode);
                         }
                     }).catch(e => console.warn('🎵 Failed to resume audio context:', e));
@@ -125,10 +125,10 @@ export class AudioSystem {
                     this.audioInitialized = true;
                     // Start music if not muted
                     if (!this.isMuted && this.music[this.musicMode]) {
-                        console.log('🎵 Starting music after user interaction');
+                         ('🎵 Starting music after user interaction');
                         this.playMusic(this.musicMode);
                     } else {
-                        console.log('🎵 Music not started:', {
+                         ('🎵 Music not started:', {
                             muted: this.isMuted,
                             hasMusic: !!this.music[this.musicMode]
                         });
@@ -454,7 +454,7 @@ export class AudioSystem {
         });
         
         audio.addEventListener('canplaythrough', () => {
-            console.log(`🎵 Audio loaded successfully: ${src}`);
+             (`🎵 Audio loaded successfully: ${src}`);
         });
         
         // Set source after event listeners
@@ -464,7 +464,7 @@ export class AudioSystem {
     }
       playSound(soundName, volumeOverride = null) {
         if (this.isMuted || !this.sounds[soundName]) {
-            console.log(`🎵 Sound not played: ${soundName} (muted: ${this.isMuted}, exists: ${!!this.sounds[soundName]})`);
+             (`🎵 Sound not played: ${soundName} (muted: ${this.isMuted}, exists: ${!!this.sounds[soundName]})`);
             return;
         }
         
@@ -472,19 +472,19 @@ export class AudioSystem {
         sound.currentTime = 0;
         sound.volume = this.isMuted ? 0 : ((volumeOverride || this.sfxVolume) * this.masterVolume);
         
-        console.log(`🎵 Playing sound: ${soundName} at volume ${sound.volume}`);
+         (`🎵 Playing sound: ${soundName} at volume ${sound.volume}`);
         
         const playPromise = sound.play();
         if (playPromise !== undefined) {
             playPromise.then(() => {
-                console.log(`🎵 Sound played successfully: ${soundName}`);
+                 (`🎵 Sound played successfully: ${soundName}`);
             }).catch(error => {
                 console.warn(`🎵 Failed to play sound ${soundName}:`, error);
                 
                 // If this is the first attempt and user hasn't interacted, try again after interaction
                 if (!this.userInteracted) {
                     const retrySound = () => {
-                        console.log(`🎵 Retrying sound after user interaction: ${soundName}`);
+                         (`🎵 Retrying sound after user interaction: ${soundName}`);
                         sound.play().catch(e => console.warn(`🎵 Retry failed for ${soundName}:`, e));
                     };
                     document.addEventListener('click', retrySound, { once: true });
@@ -493,11 +493,11 @@ export class AudioSystem {
         }
     }      playMusic(mode = 'chill') {
         if (this.isMuted || !this.music[mode]) {
-            console.log(`🎵 Music not played: mode=${mode} (muted: ${this.isMuted}, exists: ${!!this.music[mode]})`);
+             (`🎵 Music not played: mode=${mode} (muted: ${this.isMuted}, exists: ${!!this.music[mode]})`);
             return;
         }
         
-        console.log(`🎵 Attempting to play music: ${mode}`);
+         (`🎵 Attempting to play music: ${mode}`);
         
         // Stop current music
         this.stopMusic();
@@ -509,22 +509,22 @@ export class AudioSystem {
         // Set playback rate based on music mode (faster for intense mode)
         this.currentMusic.playbackRate = mode === 'intense' ? 1.1 : 1.0;
         
-        console.log(`🎵 Playing music at volume: ${this.currentMusic.volume}`);
+         (`🎵 Playing music at volume: ${this.currentMusic.volume}`);
         
         const playPromise = this.currentMusic.play();
         if (playPromise !== undefined) {
             playPromise.then(() => {
-                console.log(`🎵 Music started successfully: ${mode}`);
+                 (`🎵 Music started successfully: ${mode}`);
             }).catch(error => {
                 console.warn(`🎵 Failed to play music ${mode}:`, error);
                 
                 // If autoplay fails (common in browsers), try again after user interaction
                 if (!this.userInteracted) {
-                    console.log('🎵 Music autoplay blocked, will retry after user interaction');
+                     ('🎵 Music autoplay blocked, will retry after user interaction');
                     const resumeAudio = () => {
-                        console.log('🎵 Retrying music after user interaction');
+                         ('🎵 Retrying music after user interaction');
                         this.currentMusic.play().then(() => {
-                            console.log('🎵 Music resumed successfully after user interaction');
+                             ('🎵 Music resumed successfully after user interaction');
                         }).catch(e => console.warn('🎵 Music retry failed:', e));
                     };
                     
@@ -622,7 +622,7 @@ export class AudioSystem {
         this.musicVolume = Math.max(0, Math.min(1, volume));
         this.updateAllVolumes();
         this.saveSettings();
-        console.log(`🎵 Music volume set to: ${this.musicVolume}`);
+         (`🎵 Music volume set to: ${this.musicVolume}`);
     }
     
     /**
@@ -630,7 +630,7 @@ export class AudioSystem {
      */
     setUiSoundVolume(volume) {
         this.setSfxVolume(volume);
-        console.log(`🎵 UI sound volume set to: ${volume}`);
+         (`🎵 UI sound volume set to: ${volume}`);
     }
     
     /**
@@ -638,7 +638,7 @@ export class AudioSystem {
      */
     setCrossfadeDuration(duration) {
         this.crossfadeDuration = Math.max(0.5, Math.min(3, duration));
-        console.log(`🎵 Crossfade duration set to: ${this.crossfadeDuration}s`);
+         (`🎵 Crossfade duration set to: ${this.crossfadeDuration}s`);
     }
       updateAllVolumes() {
         // Update SFX volumes
@@ -823,7 +823,7 @@ export class AudioSystem {
      * Debugging function to print the current audio settings
      */
     debugPrintSettings() {
-        console.log('🎵 Audio Settings:', {
+         ('🎵 Audio Settings:', {
             isMuted: this.isMuted,
             masterVolume: this.masterVolume,
             sfxVolume: this.sfxVolume,
@@ -1513,7 +1513,7 @@ export class AudioSystem {
      * Force audio initialization (for testing)
      */
     forceInitialize() {
-        console.log('🎵 Force initializing audio system...');
+         ('🎵 Force initializing audio system...');
         this.userInteracted = true;
         this.audioInitialized = true;
         
@@ -1526,6 +1526,6 @@ export class AudioSystem {
             this.playMusic(this.musicMode);
         }
         
-        console.log('🎵 Audio status after force init:', this.getAudioStatus());
+         ('🎵 Audio status after force init:', this.getAudioStatus());
     }
 }

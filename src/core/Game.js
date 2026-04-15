@@ -5,33 +5,14 @@
  * to specialized modules while maintaining all original functionality.
  */
 
-import { GAME_CONFIG, GAME_STATES, DIFFICULTY_LEVELS } from '../utils/constants.js';
+import { GAME_CONFIG, GAME_STATES, DIFFICULTY_LEVELS, DEATH_MESSAGES } from '../utils/constants.js';
 import { GameEventHandlers } from './GameEventHandlers.js';
 import { GameInitialization } from './GameInitialization.js';
 import { GameLoop } from './GameLoop.js';
 import { GameNavigation } from './GameNavigation.js';
 import { GameGraphics } from './GameGraphics.js';
 
-// Creative death messages for game over screen
-const DEATH_MESSAGES = [
-    "Disconnected from reality.",
-    "NullPointerException: Skill not found.",
-    "You ran into a bug. The bug won.",
-    "Next time, try dodging... just a thought.",
-    "404: Survival not found.",
-    "Too slow for the code flow.",
-    "You glitched so hard, even the error log gave up.",
-    "Firewall 1, You 0.",
-    "Oops. You tried to divide by zero.",
-    "Memory overflow. Game crashed. You included.",
-    "Timeline corrupted. Reboot necessary.",
-    "You have been soft-deleted.",
-    "Speed: fast. Reflexes: not so much.",
-    "Nice try. Still trash though.",
-    "That trap had your IP address.",
-    "That's not a bug... you're just bad.",
-    "Sent to the recycle bin."
-];
+// Death messages are provided by shared constants (see src/utils/constants.js)
 
 export class Game {
     constructor() {
@@ -202,7 +183,7 @@ export class Game {
     determineInitialState() {
         // This is a fallback method that sets default states
         // The actual navigation logic happens in initAsync after settings are loaded
-        console.log('🔄 Game.determineInitialState() - setting temporary LOADING state');
+         ('🔄 Game.determineInitialState() - setting temporary LOADING state');
         this.gameState = GAME_STATES.LOADING;
         // Don't set pendingGameState here - it will be determined after settings load
     }
@@ -290,7 +271,7 @@ export class Game {
                 this.canvas.height = displayHeight;
             }
         } catch (error) {
-            console.error('Error resizing canvas:', error);
+            // Error resizing canvas (log removed)
         }
     }
 
@@ -299,7 +280,7 @@ export class Game {
      */
     start() {
         try {
-            console.log('🎮 Starting game loop...');
+             ('🎮 Starting game loop...');
             
             // Check if loading screen should be shown and initialize accordingly
             const shouldShowLoadingScreen = this.initialization.getShouldShowLoadingScreen();
@@ -326,9 +307,9 @@ export class Game {
                 this.initAsync();
             }
             
-            console.log('✅ Game loop started successfully');
+             ('✅ Game loop started successfully');
         } catch (error) {
-            console.error('Failed to start game:', error);
+            // Failed to start game (log removed)
             // Show error state instead of crashing
             this.gameState = GAME_STATES.HOME;
         }
@@ -387,7 +368,7 @@ export class Game {
         // Clear intervals/timeouts
         // (Autosave interval would be cleared here if implemented)
         
-        console.log('🎮 Game destroyed and resources cleaned up');
+         ('🎮 Game destroyed and resources cleaned up');
     }
 
     /**

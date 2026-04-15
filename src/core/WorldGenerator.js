@@ -75,9 +75,9 @@ export class WorldGenerator {
                 keysToRemove.forEach(key => this.chunkPooling.delete(key));
             }
             
-            console.log('🧹 WorldGenerator cleanup completed');
+             ('🧹 WorldGenerator cleanup completed');
         } catch (error) {
-            console.error('Error during WorldGenerator cleanup:', error);
+            // Error during WorldGenerator cleanup (log removed)
         }
     }
     

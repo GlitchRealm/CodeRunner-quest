@@ -11,13 +11,14 @@ const getFirebaseConfig = () => {
     
     // Production config
     const productionConfig = {
-        apiKey: "AIzaSyCo5hr7ULHLL_0UAAst74g8ePZxkB7OHFQ",
-        authDomain: "shared-sign-in.firebaseapp.com",
-        projectId: "shared-sign-in",
-        storageBucket: "shared-sign-in.firebasestorage.app",
-        messagingSenderId: "332039027753",
-        appId: "1:332039027753:web:aa7c6877d543bb90363038",
-        measurementId: "G-KK5XVVLMVN"
+      apiKey: "AIzaSyC3Sf6r81WojKrRUP-tmirHG9nW5Lytqvc",
+      authDomain: "coderunner-9e199.firebaseapp.com",
+      databaseURL: "https://coderunner-9e199-default-rtdb.firebaseio.com",
+      projectId: "coderunner-9e199",
+      storageBucket: "coderunner-9e199.firebasestorage.app",
+      messagingSenderId: "593312008496",
+      appId: "1:593312008496:web:fc12738c8ff2946138e0f5",
+      measurementId: "G-Y547G4S17C"
     };
     
     // Development config (can be same as production or different)

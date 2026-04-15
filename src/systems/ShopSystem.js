@@ -135,23 +135,74 @@ export class ShopSystem {
                 effect: { type: 'powerupUnlock', value: 'coin-magnetizer' }
             },
 
+            // 🆕 NEW POWER-UPS - Tier 2 (Advanced)
+            'shield': {
+                name: 'Energy Shield',
+                price: 900,
+                category: 'powerups',
+                description: 'Unlocks Energy Shield powerup. Grants temporary invincibility with visual effect.',
+                effect: { type: 'powerupUnlock', value: 'shield' }
+            },
+            'magnet': {
+                name: 'Data Magnet',
+                price: 800,
+                category: 'powerups',
+                description: 'Unlocks Data Magnet powerup. Attracts nearby data packets automatically.',
+                effect: { type: 'powerupUnlock', value: 'magnet' }
+            },
+            'slow-motion': {
+                name: 'Time Dilation',
+                price: 1200,
+                category: 'powerups',
+                description: 'Unlocks Time Dilation powerup. Temporarily slows down obstacles and hazards.',
+                effect: { type: 'powerupUnlock', value: 'slow-motion' }
+            },
+            'double-jump': {
+                name: 'Jump Boost',
+                price: 700,
+                category: 'powerups',
+                description: 'Unlocks Jump Boost powerup. Temporary second jump ability.',
+                effect: { type: 'powerupUnlock', value: 'double-jump' }
+            },
+            'size-change': {
+                name: 'Nano Mode',
+                price: 1000,
+                category: 'powerups',
+                description: 'Unlocks Nano Mode powerup. Shrink player to fit through tight spaces.',
+                effect: { type: 'powerupUnlock', value: 'size-change' }
+            },
+            'speed-boost': {
+                name: 'Turbo Speed',
+                price: 650,
+                category: 'powerups',
+                description: 'Unlocks Turbo Speed powerup. Temporary speed increase for better navigation.',
+                effect: { type: 'powerupUnlock', value: 'speed-boost' }
+            },
+            'score-multiplier': {
+                name: 'Score Surge',
+                price: 850,
+                category: 'powerups',
+                description: 'Unlocks Score Surge powerup. Temporary score multiplier boost.',
+                effect: { type: 'powerupUnlock', value: 'score-multiplier' }
+            },
+
             // Movement Upgrades (continued)
         };
     }    buyUpgrade(upgradeId) {
         const upgrade = this.upgradeData[upgradeId];
         if (!upgrade) {
-            console.warn(`❌ Upgrade not found: ${upgradeId}`);
+            console.warn(`Upgrade not found: ${upgradeId}`);
             return false;
         }
 
         if (this.isOwned(upgradeId)) {
-            console.warn(`❌ Upgrade already owned: ${upgradeId}`);
+            console.warn(`Upgrade already owned: ${upgradeId}`);
             return false;
         }
 
         // Prevent purchasing placeholder items
         if (upgradeId === 'coming-soon') {
-            console.warn(`❌ Cannot purchase placeholder item: ${upgradeId}`);
+            console.warn(`Cannot purchase placeholder item: ${upgradeId}`);
             return false;
         }
 
@@ -159,7 +210,7 @@ export class ShopSystem {
         if (upgrade.prerequisites && upgrade.prerequisites.length > 0) {
             for (const prereq of upgrade.prerequisites) {
                 if (!this.isOwned(prereq)) {
-                    console.warn(`❌ Prerequisites not met for ${upgradeId}: missing ${prereq}`);
+                    console.warn(`Prerequisites not met for ${upgradeId}: missing ${prereq}`);
                     return false; // Prerequisites not met
                 }
             }
@@ -167,7 +218,7 @@ export class ShopSystem {
 
         const currentCurrency = this.game.upgradeSystem ? this.game.upgradeSystem.getDataPackets() : 0;
         if (currentCurrency < upgrade.price) {
-            console.warn(`❌ Insufficient funds for ${upgradeId}: ${currentCurrency} < ${upgrade.price}`);
+            console.warn(`Insufficient funds for ${upgradeId}: ${currentCurrency} < ${upgrade.price}`);
             return false;
         }
 
@@ -188,8 +239,8 @@ export class ShopSystem {
             this.game.triggerManualSave();
         }
         
-        console.log(`✅ Successfully purchased upgrade: ${upgradeId} for ${upgrade.price} datapackets`);
-        console.log(`📦 Owned upgrades now: [${Array.from(this.ownedUpgrades).join(', ')}]`);
+         (`Successfully purchased upgrade: ${upgradeId} for ${upgrade.price} datapackets`);
+         (`Owned upgrades now: [${Array.from(this.ownedUpgrades).join(', ')}]`);
         
         // Track achievement: Style.exe for cosmetic purchases
         if (this.game.achievementSystem && upgrade.category === 'cosmetic') {
@@ -203,8 +254,8 @@ export class ShopSystem {
         const player = this.game.player;
         
         // Handle powerup unlocks
-        if (upgrade.effect && upgrade.effect.type === 'powerupUnlock') {
-            console.log(`🔓 Powerup unlocked: ${upgrade.effect.value}`);
+       if (upgrade.effect && upgrade.effect.type === 'powerupUnlock') {
+           (`Powerup unlocked: ${upgrade.effect.value}`);
             
             // Refresh the powerup system's unlocked powerups
             if (this.game.powerUpSystem) {
@@ -216,7 +267,7 @@ export class ShopSystem {
         if (upgrade.effect && upgrade.effect.type === 'sprite') {
             // For sprite cosmetics, just unlock them - don't automatically apply
             // The user should choose which sprite to use via character customization
-            console.log(`🔓 Cosmetic sprite unlocked: ${upgrade.effect.value}`);
+             (`Cosmetic sprite unlocked: ${upgrade.effect.value}`);
             
             // Don't change the selected sprite here - let the user choose via character customization
             // if (window.profileManager) {
@@ -226,7 +277,7 @@ export class ShopSystem {
             //         player.changeSprite(`./assets/${upgrade.effect.value}`);
             //     }
             //     window.profileManager.refreshSpriteSelector();
-            //     console.log(`✨ Applied cosmetic sprite: ${upgrade.effect.value}`);
+            //      (`✨ Applied cosmetic sprite: ${upgrade.effect.value}`);
             // }
             return;
         }
@@ -363,6 +414,6 @@ export class ShopSystem {
     resetAnimations() {
         // ShopSystem doesn't have animation states to reset
         // This method exists for compatibility with the navigation system
-        console.log('🛒 Shop animations reset');
+         ('Shop animations reset');
     }
 }

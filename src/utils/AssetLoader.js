@@ -39,7 +39,7 @@ export class AssetLoader {
             
             img.onerror = (error) => {
                 this.loadingPromises.delete(assetKey);
-                console.error(`Failed to load image: ${path}`, error);
+                // Failed to load image: ${path} (log removed)
                 reject(error);
             };
             

@@ -40,7 +40,7 @@ export class CacheManager {
             }
             
         } catch (error) {
-            console.error('Error setting cache value:', error);
+            // Error setting cache value (log removed)
         }
     }
 
@@ -68,7 +68,7 @@ export class CacheManager {
             
             return item.value;
         } catch (error) {
-            console.error('Error getting cache value:', error);
+            // Error getting cache value (log removed)
             return null;
         }
     }
@@ -124,10 +124,10 @@ export class CacheManager {
             this.lastCleanup = now;
             
             if (expiredKeys.length > 0) {
-                console.log(`Cache cleanup: removed ${expiredKeys.length} expired entries`);
+                 (`Cache cleanup: removed ${expiredKeys.length} expired entries`);
             }
         } catch (error) {
-            console.error('Error during cache cleanup:', error);
+            // Error during cache cleanup (log removed)
         }
     }
 
@@ -143,9 +143,9 @@ export class CacheManager {
             
             toEvict.forEach(([key]) => this.delete(key));
             
-            console.log(`Cache eviction: removed ${toEvict.length} least recent entries`);
+             (`Cache eviction: removed ${toEvict.length} least recent entries`);
         } catch (error) {
-            console.error('Error during cache eviction:', error);
+            // Error during cache eviction (log removed)
         }
     }
 
@@ -186,7 +186,7 @@ export class CacheManager {
                 value = factory();
                 this.set(key, value, customTTL);
             } catch (error) {
-                console.error('Error in cache factory function:', error);
+                // Error in cache factory function (log removed)
                 return null;
             }
         }

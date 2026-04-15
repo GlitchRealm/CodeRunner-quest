@@ -125,9 +125,9 @@ export class GameUI {    constructor(game) {
         this.drawModernPanel(x - 10, y - 5, 170, 110, 'rgba(124, 58, 237, 0.3)');
         
         // Title
-        this.ctx.fillStyle = '#f0f6fc';
-        this.ctx.font = 'bold 10px "SF Mono", "Monaco", monospace';
-        this.ctx.fillText('⚡ PERFORMANCE', x, y + 10);
+    this.ctx.fillStyle = '#f0f6fc';
+    this.ctx.font = 'bold 10px "SF Mono", "Monaco", monospace';
+    this.ctx.fillText('PERFORMANCE', x, y + 10);
           // FPS with color coding
         const fpsColor = metrics.fps >= 50 ? '#40d158' : metrics.fps >= 30 ? '#d1a01f' : '#f85149';
         this.ctx.fillStyle = fpsColor;
@@ -210,7 +210,7 @@ export class GameUI {    constructor(game) {
         
         // Position in top-right corner of the screen, outside main panels
         const x = canvas.width - 15;
-        const y = 15;
+    const y = 45; // moved down to avoid overlapping top-right panels
         
         // Set text alignment
         ctx.textAlign = 'right';
@@ -219,19 +219,19 @@ export class GameUI {    constructor(game) {
         switch (this.game.autosaveStatus) {
             case 'saving':
                 ctx.fillStyle = '#f1c232';
-                ctx.fillText(`💾 SAVING`, x, y);
+                ctx.fillText(`SAVING`, x, y);
                 break;
             case 'saved':
                 ctx.fillStyle = '#56d364';
-                ctx.fillText(`✓ SAVED`, x, y);
+                ctx.fillText(`SAVED`, x, y);
                 break;            
             case 'error':
                 ctx.fillStyle = '#f85149';
-                ctx.fillText(`⚠ ERROR`, x, y);
+                ctx.fillText(`ERROR`, x, y);
                 break;            
             case 'loaded':
                 ctx.fillStyle = '#58a6ff';
-                ctx.fillText(`📂 LOADED`, x, y);
+                ctx.fillText(`LOADED`, x, y);
                 break;
         }
         
@@ -268,10 +268,10 @@ export class GameUI {    constructor(game) {
         const bonuses = this.game.upgradeSystem ? this.game.upgradeSystem.getBonuses() : { jumpHeight: 0, scoreMultiplier: 1.0, powerUpDuration: 0 };
         const dataPackets = this.game.upgradeSystem ? this.game.upgradeSystem.getDataPackets() : 0;
         const difficulty = DIFFICULTY_LEVELS[this.game.selectedDifficulty];        // Panel title
-        ctx.fillStyle = '#f0f6fc';
-        ctx.font = 'bold 14px Courier New';
-        ctx.textAlign = 'left';
-        ctx.fillText(`📊 Game Statistics`, panelX + 10, panelY + 20);
+    ctx.fillStyle = '#f0f6fc';
+    ctx.font = 'bold 14px Courier New';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Game Statistics`, panelX + 10, panelY + 20);
         
         let yOffset = panelY + 45;
         const lineHeight = 16;
@@ -292,7 +292,12 @@ export class GameUI {    constructor(game) {
             const isNewRecord = currentScore > difficultyBestScore;
             ctx.fillStyle = isNewRecord ? '#40d158' : '#ffd700';
             ctx.font = isNewRecord ? 'bold 13px Courier New' : '13px Courier New';
-            ctx.fillText(`${difficultyBestScore}${isNewRecord ? ' ⬆️' : ''}`, rightCol, yOffset);        } else {
+            ctx.fillText(`${difficultyBestScore}`, rightCol, yOffset);
+            if (isNewRecord) {
+                ctx.fillStyle = '#40d158';
+                ctx.fillText('NEW', rightCol + 40, yOffset);
+            }
+        } else {
             ctx.fillStyle = '#8b949e';
             ctx.fillText('No Record', rightCol, yOffset);
         }
@@ -328,21 +333,13 @@ export class GameUI {    constructor(game) {
         ctx.fillStyle = '#64748b';
         ctx.fillText(`${this.t('packets')}:`, leftCol, yOffset);
         const packetColor = dataPackets >= 100 ? '#ffd700' : dataPackets >= 50 ? '#40d158' : '#58a6ff';
-        ctx.fillStyle = packetColor;        ctx.fillText(`${dataPackets} 💾`, rightCol, yOffset);// Progress bar for score to next milestone (changed to 1000 score for data packet milestones)
+    ctx.fillStyle = packetColor;        ctx.fillText(`${dataPackets}`, rightCol, yOffset);// Progress bar for score to next milestone (changed to 1000 score for data packet milestones)
         yOffset += lineHeight + 5;
-        const nextMilestone = Math.ceil(currentScore / 1000) * 1000; // Use 1000 score intervals for data packet milestones
-        const progress = nextMilestone > 0 ? (currentScore % 1000) / 1000 : 0;
-          ctx.fillStyle = '#8b949e';
-        ctx.font = '11px Courier New';
-        ctx.fillText(`${this.t('nextDataPacketBonus')}: ${nextMilestone}`, leftCol, yOffset);
-          // Show reward amount for next milestone (100 data packets per 1000 score)
-        const nextReward = 100;
+                const nextMilestone = Math.ceil(currentScore / 1000) * 1000; // Use 1000 score intervals for data packet milestones
+                const progress = nextMilestone > 0 ? (currentScore % 1000) / 1000 : 0;
+                // Removed textual 'NEXT BONUS' and reward display to simplify HUD; keep progress bar only
         
-        ctx.fillStyle = '#40d158';
-        ctx.font = '11px Courier New';
-        ctx.fillText(`+${nextReward} 💾`, rightCol + 20, yOffset);
-        
-        // Progress bar
+    // Progress bar
         const barWidth = panelWidth - 20;
         const barHeight = 6;
         const barY = yOffset + 5;
@@ -370,25 +367,30 @@ export class GameUI {    constructor(game) {
             this.drawHealthHearts();
         }
         
-        // Draw difficulty indicator in top right
-        const difficulty = DIFFICULTY_LEVELS[this.game.selectedDifficulty];
-        this.ctx.fillStyle = difficulty.color;
-        this.ctx.font = 'bold 16px "SF Mono", "Monaco", monospace';
-        this.ctx.textAlign = 'right';
-        this.ctx.fillText(`${difficulty.emoji} ${difficulty.name}`, this.canvas.width - 15, 30);
-        this.ctx.textAlign = 'left';
-        
-        // Draw side panels
+        // Draw side panels (left first so difficulty can be placed above it)
         this.drawLeftPanel();
-        this.drawRightPanel();
+
+        // Draw difficulty indicator in top-left above the left panel
+        const difficulty = DIFFICULTY_LEVELS[this.game.selectedDifficulty];
+        const leftPanelX = 15;
+        const leftPanelY = 65; // same as drawLeftPanel base
+        const difficultyY = leftPanelY - 18; // place above the panel
+    this.ctx.fillStyle = difficulty.color;
+    this.ctx.font = 'bold 14px "SF Mono", "Monaco", monospace';
+    this.ctx.textAlign = 'left';
+    this.ctx.fillText(`${difficulty.name}`, leftPanelX + 5, difficultyY);
+
+        // Draw right panel (moved to top-right corner)
+        this.drawRightPanel(true);
     }
 
     /**
      * Draw left panel with score and distance
      */
     drawLeftPanel() {
-        const panelWidth = 180;
-        const panelHeight = 120;
+        // Shrunk left panel to be more compact per user request
+        const panelWidth = 150;
+        const panelHeight = 100;
         const x = 15;
         const y = 65;
         
@@ -399,40 +401,41 @@ export class GameUI {    constructor(game) {
         const meters = this.game.player ? Math.floor(this.game.player.x / 10) : 0;
         const bestScore = this.game.bestScores[this.game.selectedDifficulty] || 0;
         
-        // Score label and value
-        this.ctx.fillStyle = 'rgba(240, 246, 252, 0.8)';
-        this.ctx.font = '12px "SF Mono", "Monaco", monospace';
-        this.ctx.fillText('SCORE', x + 15, y + 25);
-        
-        this.ctx.fillStyle = '#58a6ff';
-        this.ctx.font = 'bold 20px "SF Mono", "Monaco", monospace';
-        this.ctx.fillText(`${this.game.score}`, x + 15, y + 45);
-        
-        // Distance
-        this.ctx.fillStyle = 'rgba(240, 246, 252, 0.8)';
-        this.ctx.font = '12px "SF Mono", "Monaco", monospace';
-        this.ctx.fillText('DISTANCE', x + 15, y + 70);
-        
-        this.ctx.fillStyle = '#40d158';
-        this.ctx.font = 'bold 16px "SF Mono", "Monaco", monospace';
-        this.ctx.fillText(`${meters}m`, x + 15, y + 90);
+    // Score label and value (compact layout)
+    this.ctx.fillStyle = 'rgba(240, 246, 252, 0.8)';
+    this.ctx.font = '11px "SF Mono", "Monaco", monospace';
+    this.ctx.fillText('SCORE', x + 12, y + 22);
+
+    this.ctx.fillStyle = '#58a6ff';
+    this.ctx.font = 'bold 18px "SF Mono", "Monaco", monospace';
+    this.ctx.fillText(`${this.game.score}`, x + 12, y + 40);
+
+    // Distance (smaller)
+    this.ctx.fillStyle = 'rgba(240, 246, 252, 0.8)';
+    this.ctx.font = '11px "SF Mono", "Monaco", monospace';
+    this.ctx.fillText('DISTANCE', x + 12, y + 62);
+
+    this.ctx.fillStyle = '#40d158';
+    this.ctx.font = 'bold 14px "SF Mono", "Monaco", monospace';
+    this.ctx.fillText(`${meters}m`, x + 12, y + 80);
         
         // Best score (compact)
         if (bestScore > 0) {
             this.ctx.fillStyle = 'rgba(255, 215, 0, 0.8)';
             this.ctx.font = '10px "SF Mono", "Monaco", monospace';
-            this.ctx.fillText(`BEST: ${bestScore}`, x + 15, y + 110);
+            this.ctx.fillText(`BEST: ${bestScore}`, x + 12, y + 95);
         }
     }
 
     /**
      * Draw right panel with data packets and status
      */
-    drawRightPanel() {
+    // allow passing a flag to position the right panel at the very top-right
+    drawRightPanel(atTopRight = false) {
         const panelWidth = 200;
         const panelHeight = 120;
-        const x = this.canvas.width - panelWidth - 15;
-        const y = 65;
+        const x = atTopRight ? (this.canvas.width - panelWidth - 15) : (this.canvas.width - panelWidth - 15);
+        const y = atTopRight ? 15 : 65; // when atTopRight is true, place at very top
         
         // Modern glass-morphism panel
         this.drawModernPanel(x, y, panelWidth, panelHeight, 'rgba(64, 209, 88, 0.1)');
@@ -440,14 +443,13 @@ export class GameUI {    constructor(game) {
         // Data packets
         const dataPackets = this.game.upgradeSystem ? this.game.upgradeSystem.getDataPackets() : 0;
         
-        // Data packets icon and label
-        this.ctx.fillStyle = '#ffd700';
-        this.ctx.font = '16px "SF Mono", "Monaco", monospace';
-        this.ctx.fillText('💾', x + 15, y + 25);
-        
-        this.ctx.fillStyle = 'rgba(240, 246, 252, 0.8)';
-        this.ctx.font = '12px "SF Mono", "Monaco", monospace';
-        this.ctx.fillText('DATA PACKETS', x + 40, y + 25);
+    // Data packets icon and label (moved to top-right when requested)
+    this.ctx.fillStyle = '#ffd700';
+    this.ctx.font = '16px "SF Mono", "Monaco", monospace';
+    // removed icon, use plain label
+    this.ctx.fillStyle = 'rgba(240, 246, 252, 0.8)';
+    this.ctx.font = '12px "SF Mono", "Monaco", monospace';
+    this.ctx.fillText('DATA PACKETS', x + 12, y + 20);
         
         // Count with color coding
         const countColor = dataPackets >= 100 ? '#ffd700' : dataPackets >= 50 ? '#40d158' : '#79c0ff';
@@ -455,31 +457,19 @@ export class GameUI {    constructor(game) {
         this.ctx.font = 'bold 20px "SF Mono", "Monaco", monospace';
         this.ctx.fillText(`${dataPackets}`, x + 15, y + 50);
         
-        // Progress to next milestone
+        // Removed the 'NEXT: ... (+100)' line per user request; keep progress bar small and subtle only
         const nextMilestone = Math.ceil(this.game.score / 1000) * 1000;
         const progress = nextMilestone > 0 ? (this.game.score % 1000) / 1000 : 0;
-        
-        if (nextMilestone > this.game.score) {
-            this.ctx.fillStyle = 'rgba(240, 246, 252, 0.6)';
-            this.ctx.font = '10px "SF Mono", "Monaco", monospace';
-            this.ctx.fillText(`NEXT: ${nextMilestone} (+100)`, x + 15, y + 75);
-            
-            // Progress bar
+        if (progress > 0) {
             const barWidth = panelWidth - 30;
             const barHeight = 4;
             const barY = y + 85;
-            
-            // Background
             this.ctx.fillStyle = 'rgba(139, 148, 158, 0.2)';
             this.drawRoundedRect(this.ctx, x + 15, barY, barWidth, barHeight, 2);
             this.ctx.fill();
-            
-            // Progress
-            if (progress > 0) {
-                this.ctx.fillStyle = '#40d158';
-                this.drawRoundedRect(this.ctx, x + 15, barY, barWidth * progress, barHeight, 2);
-                this.ctx.fill();
-            }
+            this.ctx.fillStyle = '#40d158';
+            this.drawRoundedRect(this.ctx, x + 15, barY, barWidth * progress, barHeight, 2);
+            this.ctx.fill();
         }
         
         // Dash cooldown indicator (if player has dash)
@@ -526,9 +516,9 @@ export class GameUI {    constructor(game) {
         const isReady = currentCooldown <= 0;
         
         // Dash icon
-        this.ctx.fillStyle = isReady ? '#40d158' : '#8b949e';
-        this.ctx.font = '12px "SF Mono", "Monaco", monospace';
-        this.ctx.fillText('⚡ DASH', x, y);
+    this.ctx.fillStyle = isReady ? '#40d158' : '#8b949e';
+    this.ctx.font = '12px "SF Mono", "Monaco", monospace';
+    this.ctx.fillText('DASH', x, y);
         
         // Status indicator
         if (isReady) {

@@ -47,7 +47,7 @@ export class UpgradeSystem {    constructor(game) {
         } else {
             // User is logged in, mark as initialized but don't load data yet
             // Cloud save system will call loadSavedData() with the cloud data
-            console.log('💾 UpgradeSystem waiting for cloud data...');
+            // Waiting for cloud data (no-op log removed)
         }
         
         this.isInitializing = false;
@@ -60,7 +60,7 @@ export class UpgradeSystem {    constructor(game) {
         
         // Debug logging for datapackets changes
         if (window.debugMode) {
-            console.log(`💾 DataPackets added: ${previousAmount} + ${amount} = ${this.dataPackets}`);
+            console.log(`DataPackets added: ${previousAmount} + ${amount} = ${this.dataPackets}`);
         }
         
         // Save immediately when data packets are added
@@ -75,7 +75,7 @@ export class UpgradeSystem {    constructor(game) {
             
             // Debug logging for datapackets changes
             if (window.debugMode) {
-                console.log(`💰 DataPackets spent: ${previousAmount} - ${amount} = ${this.dataPackets}`);
+                console.log(`DataPackets spent: ${previousAmount} - ${amount} = ${this.dataPackets}`);
             }
             
             // Save immediately when data packets are spent
@@ -162,7 +162,12 @@ export class UpgradeSystem {    constructor(game) {
                 this.powerUpDurationLevel++;
                 this.powerUpDurationBonus += GAME_CONFIG.UPGRADE_VALUES.POWER_UP_DURATION_INCREASE;
                 break;
-        }        return true;
+        }
+        
+        // Save immediately after purchase to preserve upgrade levels
+        this.saveUpgradeData();
+        
+        return true;
     }
     
     getSelectedUpgrade() {
@@ -179,22 +184,29 @@ export class UpgradeSystem {    constructor(game) {
         return this.purchaseUpgrade(this.selectedUpgrade);
     }
       /**
-     * Reset upgrades for new game (upgrades don't persist)
+     * Reset temporary game state but keep purchased upgrades
      */
     resetUpgrades() {
-        // Reset upgrade levels but keep data packets
-        this.jumpHeightLevel = 0;
-        this.scoreMultiplierLevel = 0;
-        this.powerUpDurationLevel = 0;
+        // IMPORTANT: Do NOT reset upgrade levels and bonuses - these are permanent purchases!
+        // Only reset temporary navigation state
         
-        this.jumpHeightBonus = 0;
-        this.scoreMultiplierBonus = 0;
-        this.powerUpDurationBonus = 0;
+        // Keep upgrade levels - they are permanent purchases:
+        // this.jumpHeightLevel = 0;         // ❌ DON'T RESET
+        // this.scoreMultiplierLevel = 0;    // ❌ DON'T RESET
+        // this.powerUpDurationLevel = 0;    // ❌ DON'T RESET
+        
+        // Keep upgrade bonuses - they are permanent purchases:
+        // this.jumpHeightBonus = 0;         // ❌ DON'T RESET
+        // this.scoreMultiplierBonus = 0;    // ❌ DON'T RESET
+        // this.powerUpDurationBonus = 0;    // ❌ DON'T RESET
         
         // Keep data packets - they persist between games
-        // this.dataPackets = 0;
+        // this.dataPackets = 0;             // ❌ DON'T RESET
         
+        // Only reset UI navigation state
         this.selectedUpgrade = 0;
+        
+    // Upgrades reset - keeping purchased levels (log removed)
     }
     
     /**
@@ -215,6 +227,13 @@ export class UpgradeSystem {    constructor(game) {
         try {
             const upgradeData = {
                 dataPackets: this.dataPackets,
+                // Save upgrade levels and bonuses - these should persist!
+                jumpHeightLevel: this.jumpHeightLevel,
+                scoreMultiplierLevel: this.scoreMultiplierLevel,
+                powerUpDurationLevel: this.powerUpDurationLevel,
+                jumpHeightBonus: this.jumpHeightBonus,
+                scoreMultiplierBonus: this.scoreMultiplierBonus,
+                powerUpDurationBonus: this.powerUpDurationBonus,
                 timestamp: Date.now()
             };
             
@@ -228,9 +247,9 @@ export class UpgradeSystem {    constructor(game) {
                 });
             }
             
-            console.log(`💾 Upgrade data saved - Data Packets: ${this.dataPackets}`);
+            console.log(`Upgrade data saved - Data Packets: ${this.dataPackets}, Levels: J${this.jumpHeightLevel}/S${this.scoreMultiplierLevel}/P${this.powerUpDurationLevel}`);
         } catch (error) {
-            console.warn('⚠️ Failed to save upgrade data:', error);
+            console.warn('Failed to save upgrade data:', error);
         }
     }
     
@@ -239,7 +258,7 @@ export class UpgradeSystem {    constructor(game) {
      */
     async loadUpgradeData() {
         if (this.hasLoadedData) {
-            console.log('⚠️ UpgradeSystem data already loaded, ignoring duplicate call');
+            // UpgradeSystem data already loaded, ignoring duplicate call
             return;
         }
         
@@ -248,13 +267,26 @@ export class UpgradeSystem {    constructor(game) {
             const saved = localStorage.getItem('coderunner_upgrade_data');
             if (saved) {
                 const upgradeData = JSON.parse(saved);
-                if (upgradeData.dataPackets !== undefined) {
-                    this.dataPackets = upgradeData.dataPackets;
-                    console.log(`💾 Loaded data packets from localStorage: ${this.dataPackets}`);
-                }
+                    if (upgradeData.dataPackets !== undefined) {
+                        this.dataPackets = upgradeData.dataPackets;
+                        // Loaded data packets from localStorage
+                    }
+                
+                // Load upgrade levels and bonuses - these should persist!
+                    if (upgradeData.jumpHeightLevel !== undefined) {
+                        this.jumpHeightLevel = upgradeData.jumpHeightLevel;
+                        this.scoreMultiplierLevel = upgradeData.scoreMultiplierLevel || 0;
+                        this.powerUpDurationLevel = upgradeData.powerUpDurationLevel || 0;
+
+                        this.jumpHeightBonus = upgradeData.jumpHeightBonus || 0;
+                        this.scoreMultiplierBonus = upgradeData.scoreMultiplierBonus || 0;
+                        this.powerUpDurationBonus = upgradeData.powerUpDurationBonus || 0;
+
+                        // Loaded upgrade levels from localStorage
+                    }
             }
         } catch (error) {
-            console.warn('⚠️ Failed to load upgrade data:', error);
+            console.warn('Failed to load upgrade data:', error);
             // Keep default values on error
         }
         
@@ -267,6 +299,13 @@ export class UpgradeSystem {    constructor(game) {
     getSaveData() {
         return {
             dataPackets: this.dataPackets,
+            // Save upgrade levels and bonuses - these should persist!
+            jumpHeightLevel: this.jumpHeightLevel,
+            scoreMultiplierLevel: this.scoreMultiplierLevel,
+            powerUpDurationLevel: this.powerUpDurationLevel,
+            jumpHeightBonus: this.jumpHeightBonus,
+            scoreMultiplierBonus: this.scoreMultiplierBonus,
+            powerUpDurationBonus: this.powerUpDurationBonus,
             timestamp: Date.now()
         };
     }
@@ -276,14 +315,27 @@ export class UpgradeSystem {    constructor(game) {
      */
     loadSavedData(upgradeData) {
         if (this.hasLoadedData) {
-            console.log('⚠️ UpgradeSystem data already loaded, ignoring duplicate call');
+            // UpgradeSystem data already loaded, ignoring duplicate call
             return;
         }
         
         try {
             if (upgradeData && upgradeData.dataPackets !== undefined) {
                 this.dataPackets = upgradeData.dataPackets;
-                console.log(`💾 Loaded data packets from unified save: ${this.dataPackets}`);
+                // Loaded data packets from unified save
+            }
+            
+            // Load upgrade levels and bonuses - these should persist!
+            if (upgradeData && upgradeData.jumpHeightLevel !== undefined) {
+                this.jumpHeightLevel = upgradeData.jumpHeightLevel;
+                this.scoreMultiplierLevel = upgradeData.scoreMultiplierLevel || 0;
+                this.powerUpDurationLevel = upgradeData.powerUpDurationLevel || 0;
+                
+                this.jumpHeightBonus = upgradeData.jumpHeightBonus || 0;
+                this.scoreMultiplierBonus = upgradeData.scoreMultiplierBonus || 0;
+                this.powerUpDurationBonus = upgradeData.powerUpDurationBonus || 0;
+                
+                // Loaded upgrade levels and bonuses from unified save
             }
         } catch (error) {
             console.warn('Failed to load upgrade data from unified save:', error);

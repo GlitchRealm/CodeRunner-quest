@@ -34,12 +34,12 @@ export class AchievementSystem {
         
         // Initialize achievement definitions FIRST
         this.achievements = this.initializeAchievements();
-        console.log('🏆 Achievements initialized:', Object.keys(this.achievements).length, 'achievements');
-        console.log('🏆 Sample achievement:', Object.values(this.achievements)[0]);
+         ('🏆 Achievements initialized:', Object.keys(this.achievements).length, 'achievements');
+         ('🏆 Sample achievement:', Object.values(this.achievements)[0]);
         
         // Load saved achievement data on initialization
         this.loadAchievementData();
-        console.log(`🏆 AchievementSystem constructor: loaded ${this.unlockedAchievements.size} achievements, totalRuns: ${this.stats.totalRuns}`);
+         (`🏆 AchievementSystem constructor: loaded ${this.unlockedAchievements.size} achievements, totalRuns: ${this.stats.totalRuns}`);
     }
     
     /**
@@ -116,12 +116,12 @@ export class AchievementSystem {
      * Initialize the achievement system
      */
     async initializeSystem() {
-        console.log('🏆 Initializing Achievement System...');
+         ('🏆 Initializing Achievement System...');
         
         // Load saved achievement data
         this.loadAchievementData();
         
-        console.log(`🏆 Achievement System initialized. ${this.unlockedAchievements.size} achievements unlocked.`);
+         (`🏆 Achievement System initialized. ${this.unlockedAchievements.size} achievements unlocked.`);
     }
     
     /**
@@ -134,9 +134,9 @@ export class AchievementSystem {
      * Track when a new game starts
      */
     onGameStart() {
-        console.log(`🚀 onGameStart called - current totalRuns: ${this.stats.totalRuns}`);
+         (`🚀 onGameStart called - current totalRuns: ${this.stats.totalRuns}`);
         this.stats.totalRuns++;
-        console.log(`🚀 after increment - totalRuns: ${this.stats.totalRuns}`);
+         (`🚀 after increment - totalRuns: ${this.stats.totalRuns}`);
         this.checkAchievements();
         this.saveAchievementData();
     }
@@ -241,7 +241,7 @@ export class AchievementSystem {
      * Unlock a specific achievement
      */
     unlockAchievement(achievementId) {
-        console.log(`🔓 unlockAchievement called for: ${achievementId}, already unlocked: ${this.unlockedAchievements.has(achievementId)}`);
+         (`🔓 unlockAchievement called for: ${achievementId}, already unlocked: ${this.unlockedAchievements.has(achievementId)}`);
         
         if (this.unlockedAchievements.has(achievementId)) {
             return false; // Already unlocked
@@ -249,7 +249,7 @@ export class AchievementSystem {
         
         this.unlockedAchievements.add(achievementId);
         this.achievements[achievementId].unlocked = true;
-          console.log(`🏆 Achievement unlocked: ${this.achievements[achievementId].name}`);
+           (`🏆 Achievement unlocked: ${this.achievements[achievementId].name}`);
         
         // Show achievement hint for first-time unlock
         if (this.gameInstance && this.gameInstance.tutorialSystem) {
@@ -270,7 +270,7 @@ export class AchievementSystem {
             
             // Special notification for 100% completion
             if (unlockedCount >= totalAchievements) {
-                console.log('🎉 100% ACHIEVEMENTS UNLOCKED! King Runner is now available!');
+                 ('🎉 100% ACHIEVEMENTS UNLOCKED! King Runner is now available!');
             }
         }
         
@@ -280,7 +280,7 @@ export class AchievementSystem {
      * Show achievement notification
      */
     showAchievementNotification(achievement) {
-        console.log(`🎉 Showing achievement notification for: ${achievement.name}`);
+         (`🎉 Showing achievement notification for: ${achievement.name}`);
         
         const notification = {
             achievement: achievement,
@@ -479,7 +479,7 @@ export class AchievementSystem {
      */
     loadAchievementData() {
         if (this.hasLoadedData) {
-            console.log('🏆 loadAchievementData: already loaded, skipping');
+             ('🏆 loadAchievementData: already loaded, skipping');
             return;
         }
         
@@ -509,9 +509,9 @@ export class AchievementSystem {
                     };
                 }
                 
-                console.log(`🏆 Loaded ${this.unlockedAchievements.size} unlocked achievements from localStorage`);
+                 (`🏆 Loaded ${this.unlockedAchievements.size} unlocked achievements from localStorage`);
             } else {
-                console.log('🏆 No saved achievement data found in localStorage');
+                 ('🏆 No saved achievement data found in localStorage');
             }
             
             this.hasLoadedData = true;
@@ -523,11 +523,11 @@ export class AchievementSystem {
      * Load saved data from unified save system
      */
     loadSavedData(achievementData) {
-        console.log('🏆 loadSavedData called, hasLoadedData:', this.hasLoadedData);
+         ('🏆 loadSavedData called, hasLoadedData:', this.hasLoadedData);
         
         try {
             if (achievementData && typeof achievementData === 'object') {
-                console.log('🏆 Loading achievements from unified save:', achievementData);
+                 ('🏆 Loading achievements from unified save:', achievementData);
                 
                 // Load unlocked achievements
                 if (Array.isArray(achievementData.unlockedAchievements)) {
@@ -554,7 +554,7 @@ export class AchievementSystem {
                 this.saveAchievementData();
                 this.hasLoadedData = true;
                 
-                console.log(`🏆 Loaded ${this.unlockedAchievements.size} achievements from unified save, totalRuns: ${this.stats.totalRuns}`);
+                 (`🏆 Loaded ${this.unlockedAchievements.size} achievements from unified save, totalRuns: ${this.stats.totalRuns}`);
             }
         } catch (error) {
             console.warn('Failed to load achievement data from unified save:', error);
@@ -582,7 +582,7 @@ export class AchievementSystem {
             this.unlockAchievement(achievementId);
             this.showAchievementNotification(this.achievements[achievementId]);
             this.saveAchievementData();
-            console.log(`🧪 Debug: Unlocked achievement ${achievementId}`);
+             (`🧪 Debug: Unlocked achievement ${achievementId}`);
             return true;
         }
         console.warn(`🧪 Debug: Achievement ${achievementId} not found`);
@@ -612,7 +612,7 @@ export class AchievementSystem {
         });
         
         this.saveAchievementData();
-        console.log('🧪 Debug: All achievements reset');
+         ('🧪 Debug: All achievements reset');
     }
     
     /**
@@ -1388,14 +1388,14 @@ export class AchievementSystem {
         // Since AchievementSystem uses time-based animations, 
         // we don't need to reset specific animation states
         // This method exists for compatibility with the navigation system
-        console.log('🏆 Achievements animations reset');
+         ('🏆 Achievements animations reset');
     }
 
     /**
      * Handle clicks in the achievements screen
      */
     handleClick(x, y) {
-        console.log('🏆 Achievement click at:', x, y);
+         ('🏆 Achievement click at:', x, y);
         
         // Get canvas dimensions from game instance
         const canvasWidth = this.gameInstance?.canvas?.width || 1200;
@@ -1409,7 +1409,7 @@ export class AchievementSystem {
         
         if (x >= backButtonX && x <= backButtonX + backButtonWidth && 
             y >= backButtonY && y <= backButtonY + backButtonHeight) {
-            console.log('🏆 Back button clicked');
+             ('🏆 Back button clicked');
             
             // Navigate back to previous state or home
             if (this.gameInstance) {
@@ -1442,14 +1442,14 @@ export class AchievementSystem {
                 const buttonX = startX + index * (buttonWidth + buttonSpacing);
                 
                 if (x >= buttonX && x <= buttonX + buttonWidth) {
-                    console.log(`🏆 Category tab clicked: ${category.id}`);
+                     (`🏆 Category tab clicked: ${category.id}`);
                     
                     // Update the category filter
                     if (this.gameInstance) {
                         this.gameInstance.achievementCategory = category.id;
                         // Reset scroll when changing categories
                         this.gameInstance.achievementsScrollOffset = 0;
-                        console.log(`🏆 Achievement category changed to: ${category.id}`);
+                         (`🏆 Achievement category changed to: ${category.id}`);
                     }
                     
                     return { action: 'filter', category: category.id };

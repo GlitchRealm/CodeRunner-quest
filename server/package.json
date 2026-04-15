@@ -1,0 +1,11 @@
+{
+  "name": "coderunner-server",
+  "version": "1.0.0",
+  "description": "Minimal static server for CodeRunner development",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "CodeRunner Team",
+  "license": "MIT"
+}

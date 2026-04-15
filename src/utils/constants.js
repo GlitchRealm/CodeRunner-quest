@@ -31,6 +31,22 @@ export const GAME_CONFIG = {
     JUMP_BUFFER_TIME: 150,  // Jump input buffer in ms
     COYOTE_TIME: 120,  // Grace period for jumping after leaving ground
     
+    // Wall jump constants
+    WALL_JUMP_POWER: -380,     // Wall jump strength (slightly less than normal jump)
+    WALL_JUMP_HORIZONTAL: 200, // Horizontal velocity from wall jump
+    WALL_SLIDE_SPEED: 80,      // Maximum wall slide speed
+    WALL_STICK_TIME: 100,      // Time to stick to wall before sliding
+    WALL_JUMP_COOLDOWN: 200,   // Cooldown between wall jumps (ms)
+    WALL_DETECTION_DISTANCE: 8, // Distance to check for walls
+    
+    // Ground pound constants
+    GROUND_POUND_SPEED: 600,   // Downward velocity during ground pound
+    GROUND_POUND_COOLDOWN: 1000, // Cooldown between ground pounds (ms)
+    GROUND_POUND_FORCE: 800,   // Initial force of ground pound
+    GROUND_POUND_RADIUS: 60,   // Effect radius for ground pound impact
+    SCREEN_SHAKE_DURATION: 300, // Duration of screen shake effect (ms)
+    SCREEN_SHAKE_INTENSITY: 8, // Intensity of screen shake
+    
     // Health system
     PLAYER_HEALTH: 3,
     MAX_HEALTH: 3,
@@ -219,3 +235,25 @@ export const COLORS = {
     CRUSHER_HIGHLIGHT: '#94A3B8',
     CRUSHER_WARNING: '#EF4444'
 };
+
+// Shared death messages used across game modules
+export const DEATH_MESSAGES = [
+    "Disconnected from reality.",
+    "NullPointerException: Skill not found.",
+    "You ran into a bug. The bug won.",
+    "Next time, try dodging... just a thought.",
+    "404: Survival not found.",
+    "Too slow for the code flow.",
+    "You glitched so hard, even the error log gave up.",
+    "Firewall 1, You 0.",
+    "Oops. You tried to divide by zero.",
+    "Memory overflow. Game crashed. You included.",
+    "Timeline corrupted. Reboot necessary.",
+    "You have been soft-deleted.",
+    "Speed: fast. Reflexes: not so much.",
+    "Nice try. Still trash though.",
+    "That trap had your IP address.",
+    "That's not a bug... you're just bad.",
+    "You got out-coded.",
+    "Sent to the recycle bin."
+];

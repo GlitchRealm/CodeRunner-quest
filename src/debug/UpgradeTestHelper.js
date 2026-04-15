@@ -101,7 +101,7 @@ export class UpgradeTestHelper {
 
             // Saw testing functions
             testSaws: () => {
-                console.log('🪚 Testing Saw Spawning...');
+                 ('🪚 Testing Saw Spawning...');
                 if (this.game.world && this.game.world.worldGenerator) {
                     const generator = this.game.world.worldGenerator;
                    

@@ -27,56 +27,48 @@ export class OptionsSystem {
             { 
                 text: 'Tutorial', 
                 action: 'tutorial', 
-                icon: '📚', 
                 color: '#f59e0b',
                 description: 'Learn the game basics and controls'
             },
             { 
                 text: 'Achievements', 
                 action: 'achievements', 
-                icon: '🏆', 
                 color: '#8b5cf6',
                 description: 'View your progress and unlocks'
             },
             { 
                 text: 'Leaderboard', 
                 action: 'leaderboard', 
-                icon: '🏅', 
                 color: '#f97316',
                 description: 'View top scores and rankings'
             },
             { 
                 text: 'Shop', 
                 action: 'shop', 
-                icon: '🛒', 
                 color: '#10b981',
                 description: 'Upgrade your abilities and buy cosmetics'
             },
             { 
                 text: 'Character', 
                 action: 'character', 
-                icon: '👤', 
                 color: '#06b6d4',
                 description: 'Customize your character appearance'
             },
             { 
                 text: 'Settings', 
                 action: 'settings', 
-                icon: '🔧', 
                 color: '#ef4444',
                 description: 'Audio, graphics, and controls'
             },
             { 
                 text: 'Feedback', 
                 action: 'feedback', 
-                icon: '📝', 
                 color: '#3b82f6',
                 description: 'Send feedback and suggestions'
             },
             { 
                 text: 'Back to Main Menu', 
                 action: 'back', 
-                icon: '🏠', 
                 color: '#6b7280',
                 description: 'Return to the main menu'
             }
