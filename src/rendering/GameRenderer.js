@@ -38,6 +38,132 @@ export class GameRenderer {
         // Frame skipping for animations
         this.animationFrameSkip = 0;
         this.maxAnimationFrameSkip = 2; // Skip every 2nd frame for animations when needed
+
+        // Timeline swap FX state
+        this.timelineSwapFx = {
+            active: false,
+            startTime: 0,
+            duration: 300,
+            targetTimeline: 'normal',
+            inversionFrames: 0
+        };
+    }
+
+    triggerTimelineSwapEffect(targetTimeline) {
+        this.timelineSwapFx.active = true;
+        this.timelineSwapFx.startTime = performance.now();
+        this.timelineSwapFx.targetTimeline = targetTimeline === 'corrupt' ? 'corrupt' : 'normal';
+        this.timelineSwapFx.inversionFrames = 1;
+    }
+
+    renderTimelineSwapEffect() {
+        if (!this.timelineSwapFx.active) return;
+
+        const now = performance.now();
+        const elapsed = now - this.timelineSwapFx.startTime;
+        const progress = Math.min(1, elapsed / this.timelineSwapFx.duration);
+
+        if (progress >= 1) {
+            this.timelineSwapFx.active = false;
+            this.timelineSwapFx.inversionFrames = 0;
+            return;
+        }
+
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        // 1-frame inversion pass.
+        if (this.timelineSwapFx.inversionFrames > 0) {
+            this.ctx.save();
+            this.ctx.globalCompositeOperation = 'difference';
+            this.ctx.fillStyle = 'white';
+            this.ctx.fillRect(0, 0, w, h);
+            this.ctx.restore();
+            this.timelineSwapFx.inversionFrames -= 1;
+        }
+
+        // CRT scanline overlay with fast falloff.
+        const scanAlpha = (1 - progress) * 0.2;
+        this.ctx.save();
+        this.ctx.globalAlpha = scanAlpha;
+        this.ctx.fillStyle = '#0a0a0a';
+        for (let y = 0; y < h; y += 3) {
+            this.ctx.fillRect(0, y, w, 1);
+        }
+        this.ctx.restore();
+
+        // Horizontal glitch bars for distortion feel.
+        const bars = 8;
+        for (let i = 0; i < bars; i++) {
+            const bandSeed = (elapsed * 0.05) + i * 17.3;
+            const bandY = Math.floor((Math.sin(bandSeed) * 0.5 + 0.5) * h);
+            const bandH = 2 + (i % 3);
+            const shift = Math.round(Math.sin(bandSeed * 1.7) * (10 * (1 - progress)));
+
+            this.ctx.save();
+            this.ctx.globalAlpha = 0.08 * (1 - progress);
+            this.ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            this.ctx.fillRect(shift, bandY, w, bandH);
+            this.ctx.restore();
+        }
+
+        // Hue-shift style tint pulse.
+        const tintAlpha = 0.22 * (1 - progress);
+        const tintColor = this.timelineSwapFx.targetTimeline === 'corrupt'
+            ? 'rgba(255, 72, 128, 1)'
+            : 'rgba(72, 200, 255, 1)';
+
+        this.ctx.save();
+        this.ctx.globalCompositeOperation = 'screen';
+        this.ctx.globalAlpha = tintAlpha;
+        this.ctx.fillStyle = tintColor;
+        this.ctx.fillRect(0, 0, w, h);
+        this.ctx.restore();
+
+        // Corner-only glitch accents for the first 0.3s of transition.
+        this.renderCornerGlitchOverlay(progress, elapsed);
+    }
+
+    renderCornerGlitchOverlay(progress, elapsed) {
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const cornerSize = Math.floor(Math.min(w, h) * 0.16);
+        const alpha = 0.22 * (1 - progress);
+        const isCorrupt = this.timelineSwapFx.targetTimeline === 'corrupt';
+        const accent = isCorrupt ? 'rgba(255, 98, 168, 0.95)' : 'rgba(90, 210, 255, 0.9)';
+
+        this.ctx.save();
+        this.ctx.globalCompositeOperation = 'screen';
+        this.ctx.globalAlpha = alpha;
+
+        const corners = [
+            { x: 0, y: 0, dx: 1, dy: 1 },
+            { x: w, y: 0, dx: -1, dy: 1 },
+            { x: 0, y: h, dx: 1, dy: -1 },
+            { x: w, y: h, dx: -1, dy: -1 }
+        ];
+
+        corners.forEach((corner, i) => {
+            const jitter = Math.sin(elapsed * 0.05 + i * 1.9) * 4;
+
+            this.ctx.fillStyle = accent;
+            this.ctx.beginPath();
+            this.ctx.moveTo(corner.x, corner.y);
+            this.ctx.lineTo(corner.x + corner.dx * (cornerSize + jitter), corner.y);
+            this.ctx.lineTo(corner.x, corner.y + corner.dy * (cornerSize - jitter));
+            this.ctx.closePath();
+            this.ctx.fill();
+
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            this.ctx.fillRect(
+                corner.x + corner.dx * 8,
+                corner.y + corner.dy * (10 + (i % 2) * 5),
+                corner.dx * 22,
+                corner.dy * 2
+            );
+        });
+
+        this.ctx.restore();
     }
 
     /**
@@ -46,8 +172,9 @@ export class GameRenderer {
     clearCanvas() {
         // Create different gradient complexity based on graphics quality
         const quality = this.game.graphicsQuality;
+        const timeline = this.game.currentTimeline === 'corrupt' ? 'corrupt' : 'normal';
         const shouldCacheGradient = this.renderOptimizations.cacheGradients && quality !== 'high';
-        const gradientKey = `bg_${this.canvas.width}_${this.canvas.height}_${quality}`;
+        const gradientKey = `bg_${this.canvas.width}_${this.canvas.height}_${quality}_${timeline}`;
         let gradient = shouldCacheGradient ? this.gradientCache.get(gradientKey) : null;
         
         if (!gradient && shouldCacheGradient) {
@@ -90,21 +217,33 @@ export class GameRenderer {
      */
     createBackgroundGradient(quality) {
         const time = Date.now() * 0.0005;
+        const isCorrupt = this.game.currentTimeline === 'corrupt';
         
         switch (quality) {
             case 'low':
                 // Simple solid color background
                 const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-                gradient.addColorStop(0, '#0a0e14');
-                gradient.addColorStop(1, '#151b26');
+                if (isCorrupt) {
+                    gradient.addColorStop(0, '#160b1d');
+                    gradient.addColorStop(1, '#241028');
+                } else {
+                    gradient.addColorStop(0, '#0a0e14');
+                    gradient.addColorStop(1, '#151b26');
+                }
                 return gradient;
                 
             case 'medium':
                 // Standard gradient
                 const mediumGradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-                mediumGradient.addColorStop(0, '#0d1117');
-                mediumGradient.addColorStop(0.5, '#161b22');
-                mediumGradient.addColorStop(1, '#21262d');
+                if (isCorrupt) {
+                    mediumGradient.addColorStop(0, '#18111d');
+                    mediumGradient.addColorStop(0.5, '#23162b');
+                    mediumGradient.addColorStop(1, '#2a1b35');
+                } else {
+                    mediumGradient.addColorStop(0, '#0d1117');
+                    mediumGradient.addColorStop(0.5, '#161b22');
+                    mediumGradient.addColorStop(1, '#21262d');
+                }
                 return mediumGradient;
                 
             case 'high':
@@ -115,10 +254,17 @@ export class GameRenderer {
                     centerX, centerY, 0,
                     centerX, centerY, Math.max(this.canvas.width, this.canvas.height) * 0.8
                 );
-                highGradient.addColorStop(0, `rgba(16, 24, 40, ${0.9 + Math.sin(time * 2) * 0.1})`);
-                highGradient.addColorStop(0.3, `rgba(13, 17, 23, ${0.95 + Math.sin(time * 1.5) * 0.05})`);
-                highGradient.addColorStop(0.6, `rgba(21, 26, 45, ${0.8 + Math.cos(time * 1.2) * 0.1})`);
-                highGradient.addColorStop(1, `rgba(10, 14, 20, ${0.98 + Math.sin(time * 0.8) * 0.02})`);
+                if (isCorrupt) {
+                    highGradient.addColorStop(0, `rgba(52, 18, 66, ${0.9 + Math.sin(time * 2) * 0.1})`);
+                    highGradient.addColorStop(0.3, `rgba(36, 14, 44, ${0.95 + Math.sin(time * 1.5) * 0.05})`);
+                    highGradient.addColorStop(0.6, `rgba(60, 18, 72, ${0.8 + Math.cos(time * 1.2) * 0.1})`);
+                    highGradient.addColorStop(1, `rgba(22, 9, 28, ${0.98 + Math.sin(time * 0.8) * 0.02})`);
+                } else {
+                    highGradient.addColorStop(0, `rgba(16, 24, 40, ${0.9 + Math.sin(time * 2) * 0.1})`);
+                    highGradient.addColorStop(0.3, `rgba(13, 17, 23, ${0.95 + Math.sin(time * 1.5) * 0.05})`);
+                    highGradient.addColorStop(0.6, `rgba(21, 26, 45, ${0.8 + Math.cos(time * 1.2) * 0.1})`);
+                    highGradient.addColorStop(1, `rgba(10, 14, 20, ${0.98 + Math.sin(time * 0.8) * 0.02})`);
+                }
                 return highGradient;
                 
             default:
@@ -349,6 +495,9 @@ export class GameRenderer {
         } else if (this.game.gameState === GAME_STATES.GAME_OVER) {
             this.drawGameOverOverlay();
         }
+
+        // Post-process timeline swap FX on top of the fully rendered frame.
+        this.renderTimelineSwapEffect();
     }    /**
      * Draw UI elements specific to GameRenderer (minimal, GameUI handles most UI)
      */

@@ -85,6 +85,7 @@ export class Player {
         this.onGround = true; // Start on ground to prevent immediate falling
         this.isJumping = false;
         this.isPressingDown = false;        // Optimized jump state tracking
+        this.timelineSwapJumpLockMs = 0;
         this.jumpState = {
             wasPressed: false,        // Previous frame jump key state
             justPressed: false,       // Jump key pressed this frame
@@ -182,6 +183,10 @@ export class Player {
         
         // Process jump input AFTER physics update to ensure correct ground state
         this.updateJumping(inputKeys, deltaTime);
+
+                if (this.timelineSwapJumpLockMs > 0) {
+                        this.timelineSwapJumpLockMs = Math.max(0, this.timelineSwapJumpLockMs - deltaTime);
+                }
           // Update dash system
         this.updateDash(deltaTime);
         
@@ -283,6 +288,21 @@ export class Player {
         }
         
         const jumpPressed = inputKeys.space || inputKeys.up;
+
+        // Briefly suppress jump handling right after a timeline swap.
+        if (this.timelineSwapJumpLockMs > 0) {
+            this.jumpState.justPressed = false;
+            this.jumpState.inputBuffer = 0;
+            this.jumpState.wasPressed = jumpPressed;
+
+            if (!this.onGround) {
+                this.jumpState.airTime += deltaTime;
+            } else {
+                this.jumpState.airTime = 0;
+            }
+
+            return;
+        }
         
         // Handle simple dash - triggered by Shift key when basic dash upgrade is available
         if (this.shopUpgrades.dash && inputKeys.shift && this.dashState.dashCooldown <= 0 && !this.dashState.isDashing) {
@@ -373,6 +393,18 @@ export class Player {
         this.jumpState.airTime = 0;
         
         return true;
+    }
+
+    applyTimelineSwapMomentumCancel(lockDurationMs = 120) {
+        // Cancel upward jump momentum to avoid unfair boosts during timeline transitions.
+        if (this.vy < 0) {
+            this.vy = 0;
+        }
+
+        this.jumpState.inputBuffer = 0;
+        this.jumpState.justPressed = false;
+        this.jumpState.wasPressed = true;
+        this.timelineSwapJumpLockMs = Math.max(this.timelineSwapJumpLockMs, lockDurationMs);
     }
     
     updatePhysics(deltaSeconds, physicsEngine) {

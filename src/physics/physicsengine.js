@@ -14,6 +14,31 @@ export class PhysicsEngine {
         this.maxCacheSize = 100;
         this.cacheHitCount = 0;
         this.cacheMissCount = 0;
+
+        // Track per-entity movement so we can detect hazards that were passed safely.
+        this.entityHazardTracking = new WeakMap();
+    }
+
+    isTimelineTileActive(tileX, tileY, tileType) {
+        if (!this.world || typeof this.world.isTileActiveInCurrentTimeline !== 'function') {
+            return true;
+        }
+        return this.world.isTileActiveInCurrentTimeline(tileX, tileY, tileType);
+    }
+
+    isMemoryMazeSpikeHazardActive(tileX, tileY) {
+        const memoryMazeState = this.world && this.world.game ? this.world.game.memoryMazeState : null;
+        if (!memoryMazeState || !memoryMazeState.active || !Array.isArray(memoryMazeState.roomSpikeTileKeys)) {
+            return true;
+        }
+
+        const tileKey = `${tileX},${tileY}`;
+        if (!memoryMazeState.roomSpikeTileKeys.includes(tileKey)) {
+            return true;
+        }
+
+        // Hidden spikes remain hazardous for memory-maze tension.
+        return true;
     }
     
     /**
@@ -206,6 +231,7 @@ export class PhysicsEngine {
         
         switch (tileType) {
             case TILE_TYPES.FLOOR:
+            case TILE_TYPES.BREAKABLE_WALL:
                 return true;
             case TILE_TYPES.PLATFORM:
                 return direction === 1 && !playerDropping;
@@ -368,18 +394,27 @@ export class PhysicsEngine {
                 const tile = this.world.getTileAt(tileX, tileY);
                 
                 // Static hazards
-                if (tile === TILE_TYPES.SPIKE) {
+                if (
+                    tile === TILE_TYPES.SPIKE &&
+                    this.isTimelineTileActive(tileX, tileY, TILE_TYPES.SPIKE) &&
+                    this.isMemoryMazeSpikeHazardActive(tileX, tileY)
+                ) {
                     return { hazard: true, type: 'spike' };
                 }
                 
                 // Dynamic saw blade - always hazardous
-                if (tile === TILE_TYPES.SAW) {
+                if (tile === TILE_TYPES.SAW && this.isTimelineTileActive(tileX, tileY, TILE_TYPES.SAW)) {
                     return { hazard: true, type: 'saw' };
+                }
+
+                // Corrupted-space glitch drone hazard
+                if (tile === TILE_TYPES.GLITCH_DRONE && this.isTimelineTileActive(tileX, tileY, TILE_TYPES.GLITCH_DRONE)) {
+                    return { hazard: true, type: 'glitchDrone' };
                 }
                 
                 // Fire laser - laser source itself is not hazardous
                 // Only the actual laser beams are hazardous (handled by checkForLaserBeams)
-                if (tile === TILE_TYPES.LASER) {
+                if (tile === TILE_TYPES.LASER && this.isTimelineTileActive(tileX, tileY, TILE_TYPES.LASER)) {
                     // Laser source tile itself is safe to touch
                     // Damage only comes from the laser beams, not the source block
                 }
@@ -390,7 +425,7 @@ export class PhysicsEngine {
                 }
                 
                 // Crusher - check for collision with the moving crusher block
-                if (tile === TILE_TYPES.CRUSHER) {
+                if (tile === TILE_TYPES.CRUSHER && this.isTimelineTileActive(tileX, tileY, TILE_TYPES.CRUSHER)) {
                     const cycleTime = GAME_CONFIG.CRUSHER_CYCLE_TIME;
                     const cycle = (currentTime % cycleTime) / cycleTime;
                     
@@ -454,8 +489,53 @@ export class PhysicsEngine {
         if (entity.x < -100) {
             return { hazard: true, type: 'outOfBounds' };
         }
+
+        this.trackPassedHazards(entity, right, top, bottom);
         
         return { hazard: false };
+    }
+
+    trackPassedHazards(entity, currentRightTile, top, bottom) {
+        const game = this.world?.game;
+        const achievementSystem = game?.achievementSystem;
+
+        if (!achievementSystem) {
+            return;
+        }
+
+        const state = this.entityHazardTracking.get(entity) || { lastRightTile: currentRightTile };
+
+        if (currentRightTile <= state.lastRightTile) {
+            state.lastRightTile = currentRightTile;
+            this.entityHazardTracking.set(entity, state);
+            return;
+        }
+
+        let dodgedCount = 0;
+        const hazardTiles = new Set([
+            TILE_TYPES.SPIKE,
+            TILE_TYPES.SAW,
+            TILE_TYPES.LASER,
+            TILE_TYPES.CRUSHER,
+            TILE_TYPES.GLITCH_DRONE
+        ]);
+
+        for (let tileX = state.lastRightTile + 1; tileX <= currentRightTile; tileX++) {
+            for (let tileY = Math.max(0, top - 2); tileY <= bottom + 2; tileY++) {
+                const tile = this.world.getTileAt(tileX, tileY);
+                if (hazardTiles.has(tile) && this.isTimelineTileActive(tileX, tileY, tile)) {
+                    dodgedCount++;
+                    break;
+                }
+            }
+        }
+
+        if (dodgedCount > 0) {
+            achievementSystem.trackEvent('hazardDodged', { count: dodgedCount });
+        }
+
+        state.lastRightTile = currentRightTile;
+        this.entityHazardTracking.set(entity, state);
     }
     
     /**
@@ -473,7 +553,7 @@ export class PhysicsEngine {
             for (let tileX = left; tileX <= right; tileX++) {
                 const tile = this.world.getTileAt(tileX, tileY);
                 
-                if (tile === TILE_TYPES.DATA_PACKET) {
+                if (tile === TILE_TYPES.DATA_PACKET && this.isTimelineTileActive(tileX, tileY, TILE_TYPES.DATA_PACKET)) {
                     // Collect the data packet
                     this.world.setTileAt(tileX, tileY, TILE_TYPES.EMPTY);
                     
@@ -548,7 +628,8 @@ export class PhysicsEngine {
                         // Track achievement: Data packet collection
                         if (game.achievementSystem) {
                             game.achievementSystem.trackEvent('dataPacketCollected', {
-                                points: scoreBonus
+                                points: scoreBonus,
+                                packetCount: 1
                             });
                         }
                     }
@@ -590,7 +671,7 @@ export class PhysicsEngine {
         for (let checkX = Math.max(0, tileX - 5); checkX < tileX; checkX++) {
             // Check if the tile is a laser
             const tile = this.world.getTileAt(checkX, tileY);
-            if (tile === TILE_TYPES.LASER) {
+            if (tile === TILE_TYPES.LASER && this.isTimelineTileActive(checkX, tileY, TILE_TYPES.LASER)) {
                 const laserWorldX = checkX * GAME_CONFIG.TILE_SIZE;
                 const laserCenterY = tileY * GAME_CONFIG.TILE_SIZE + GAME_CONFIG.TILE_SIZE / 2;
                 
@@ -646,7 +727,7 @@ export class PhysicsEngine {
         for (let checkY = 0; checkY < tileY; checkY++) {
             const tile = this.world.getTileAt(tileX, checkY);
             
-            if (tile === TILE_TYPES.CRUSHER) {
+            if (tile === TILE_TYPES.CRUSHER && this.isTimelineTileActive(tileX, checkY, TILE_TYPES.CRUSHER)) {
                 // Calculate crusher extension using the same animation logic as the renderer
                 const cycle = (currentTime % cycleTime) / cycleTime;
                 

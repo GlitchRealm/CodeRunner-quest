@@ -16,15 +16,23 @@ export class AchievementSystem {
         this.stats = {
             totalRuns: 0,
             totalDataPacketsCollected: 0,
+            currentRunDataPackets: 0,
+            bestRunDataPackets: 0,
+            currentRunHazardsDodged: 0,
+            bestHazardsDodgedRun: 0,
             bestDistance: 0,
             bestTime: 0,
+            longestSurvivalTime: 0,
             totalDeaths: 0,
             deathsUnder100m: 0,
+            spikeDeaths: 0,
+            deletionWaveDeaths: 0,
             runsOver500m: 0,
             runsOver2000m: 0,
             customizationsUsed: new Set(), // Tracks which customizations have been used
             profileNameSet: false
         };
+        this.unlockedAt = {};
           // Visual notification system
         this.activeNotifications = [];
         this.notificationTimer = 0;
@@ -54,30 +62,119 @@ export class AchievementSystem {
                 description: 'Make your first run.',
                 icon: '🚀',
                 category: 'progress',
+                rarity: 'common',
+                target: 1,
                 unlocked: false,
+                getProgress: () => this.stats.totalRuns,
                 condition: () => this.stats.totalRuns >= 1
             },
             
             'packet-runner': {
                 id: 'packet-runner',
                 name: 'Packet Runner',
-                description: 'Reach 500m in a single run.',
-                icon: '📦',
+                description: 'Reach 100m in a single run.',
+                icon: '💯',
                 category: 'progress',
+                rarity: 'common',
+                target: 100,
                 unlocked: false,
+                getProgress: () => this.stats.bestDistance,
+                condition: () => this.stats.bestDistance >= 100
+            },
+
+            'half-kilometer': {
+                id: 'half-kilometer',
+                name: 'Half Kilometer',
+                description: 'Reach 500m in a single run.',
+                icon: '🏃',
+                category: 'progress',
+                rarity: 'common',
+                target: 500,
+                unlocked: false,
+                getProgress: () => this.stats.bestDistance,
                 condition: () => this.stats.bestDistance >= 500
+            },
+
+            'kilometer-club': {
+                id: 'kilometer-club',
+                name: 'Kilometer Club',
+                description: 'Reach 1000m in one run.',
+                icon: '🎯',
+                category: 'progress',
+                rarity: 'rare',
+                target: 1000,
+                unlocked: false,
+                getProgress: () => this.stats.bestDistance,
+                condition: () => this.stats.bestDistance >= 1000
             },
             
             'mainframe-breaker': {
                 id: 'mainframe-breaker',
                 name: 'Mainframe Breaker',
                 description: 'Reach 2000m in one run.',
-                icon: '💻',
+                icon: '🔥',
                 category: 'progress',
+                rarity: 'epic',
+                target: 2000,
                 unlocked: false,
+                getProgress: () => this.stats.bestDistance,
                 condition: () => this.stats.bestDistance >= 2000
             },
+
+            // ⚡ Skill-Based Achievements
+            'firewall-jumper': {
+                id: 'firewall-jumper',
+                name: 'Firewall Jumper',
+                description: 'Dodge 50 hazards in one run.',
+                icon: '🛡️',
+                category: 'skill',
+                rarity: 'rare',
+                target: 50,
+                unlocked: false,
+                getProgress: () => this.stats.bestHazardsDodgedRun,
+                condition: () => this.stats.bestHazardsDodgedRun >= 50
+            },
+
+            // 📦 Collection Achievements
+            'data-collector': {
+                id: 'data-collector',
+                name: 'Data Collector',
+                description: 'Collect your first data packet from the digital world.',
+                icon: '📦',
+                category: 'collection',
+                rarity: 'common',
+                target: 1,
+                unlocked: false,
+                getProgress: () => this.stats.totalDataPacketsCollected,
+                condition: () => this.stats.totalDataPacketsCollected >= 1
+            },
+
+            'packet-hunter': {
+                id: 'packet-hunter',
+                name: 'Packet Hunter',
+                description: 'Collect 50 data packets in a single run.',
+                icon: '🎯',
+                category: 'collection',
+                rarity: 'rare',
+                target: 50,
+                unlocked: false,
+                getProgress: () => this.stats.bestRunDataPackets,
+                condition: () => this.stats.bestRunDataPackets >= 50
+            },
             
+            'collector-glitch': {
+                id: 'collector-glitch',
+                name: 'Collector Glitch',
+                description: 'Collect 10,000 datapackets total across all runs.',
+                icon: '💎',
+                category: 'collection',
+                rarity: 'epic',
+                target: 10000,
+                unlocked: false,
+                getProgress: () => this.stats.totalDataPacketsCollected,
+                condition: () => this.stats.totalDataPacketsCollected >= 10000
+            },
+
             // 💀 Death-Based Achievements
             '404-skill-not-found': {
                 id: '404-skill-not-found',
@@ -85,20 +182,80 @@ export class AchievementSystem {
                 description: 'Die within the first 100m.',
                 icon: '💀',
                 category: 'death',
+                rarity: 'common',
+                target: 1,
                 unlocked: false,
+                getProgress: () => this.stats.deathsUnder100m,
                 condition: () => this.stats.deathsUnder100m >= 1
             },
-            
-            // 🧠 Meta Achievements
-            'collector-glitch': {
-                id: 'collector-glitch',
-                name: 'Collector Glitch',
-                description: 'Collect 10,000 datapack total across all runs.',
-                icon: '💾',
-                category: 'meta',
+
+            'spike-magnet': {
+                id: 'spike-magnet',
+                name: 'Spike Magnet',
+                description: 'Die to spikes 10 times total.',
+                icon: '🧲',
+                category: 'death',
+                rarity: 'rare',
+                target: 10,
                 unlocked: false,
-                condition: () => this.stats.totalDataPacketsCollected >= 10000
+                getProgress: () => this.stats.spikeDeaths,
+                condition: () => this.stats.spikeDeaths >= 10
             },
+
+            'deletion-protocol': {
+                id: 'deletion-protocol',
+                name: 'Deletion Protocol',
+                description: 'Get caught by the deletion wave.',
+                icon: '⚠️',
+                category: 'death',
+                rarity: 'epic',
+                target: 1,
+                unlocked: false,
+                getProgress: () => this.stats.deletionWaveDeaths,
+                condition: () => this.stats.deletionWaveDeaths >= 1
+            },
+
+            // 🎨 Customization Achievements
+            'style-exe': {
+                id: 'style-exe',
+                name: 'Style.exe',
+                description: 'Equip a cosmetic skin.',
+                icon: '👕',
+                category: 'customization',
+                rarity: 'common',
+                target: 1,
+                unlocked: false,
+                getProgress: () => this.stats.customizationsUsed.size,
+                condition: () => this.stats.customizationsUsed.size >= 1
+            },
+
+            'pixel-you': {
+                id: 'pixel-you',
+                name: 'Pixel You',
+                description: 'Draw and save a custom profile picture.',
+                icon: '🎨',
+                category: 'customization',
+                rarity: 'rare',
+                target: 1,
+                unlocked: false,
+                getProgress: () => this.stats.customizationsUsed.has('custom-profile-picture') ? 1 : 0,
+                condition: () => this.stats.customizationsUsed.has('custom-profile-picture')
+            },
+
+            'title-hacker': {
+                id: 'title-hacker',
+                name: 'Title Hacker',
+                description: 'Set your display name from the profile screen.',
+                icon: '📝',
+                category: 'customization',
+                rarity: 'common',
+                target: 1,
+                unlocked: false,
+                getProgress: () => this.stats.profileNameSet ? 1 : 0,
+                condition: () => this.stats.profileNameSet
+            },
+
+            // 🧠 Meta Achievements
             
             'data-godspeed': {
                 id: 'data-godspeed',
@@ -106,8 +263,40 @@ export class AchievementSystem {
                 description: 'Reach 1000m in under 2 minutes.',
                 icon: '⚡',
                 category: 'meta',
+                rarity: 'epic',
+                target: 120,
                 unlocked: false,
+                getProgress: () => this.stats.bestTime > 0 ? Math.max(0, 120 - this.stats.bestTime) : 0,
                 condition: () => this.stats.bestTime > 0 && this.stats.bestTime <= 120 && this.stats.bestDistance >= 1000
+            },
+
+            'network-survivor': {
+                id: 'network-survivor',
+                name: 'Network Survivor',
+                description: 'Survive for 5 minutes in a single run.',
+                icon: '🛡️',
+                category: 'meta',
+                rarity: 'epic',
+                target: 300,
+                unlocked: false,
+                getProgress: () => this.stats.longestSurvivalTime,
+                condition: () => this.stats.longestSurvivalTime >= 300
+            },
+
+            'achievement-hunter': {
+                id: 'achievement-hunter',
+                name: 'Achievement Hunter',
+                description: 'Unlock 75% of all achievements.',
+                icon: '🏆',
+                category: 'meta',
+                rarity: 'legendary',
+                unlocked: false,
+                getProgress: () => this.unlockedAchievements.size,
+                condition: () => {
+                    const total = Object.keys(this.achievements).length;
+                    const threshold = Math.ceil(total * 0.75);
+                    return this.unlockedAchievements.size >= threshold;
+                }
             }
         };
     }
@@ -136,6 +325,8 @@ export class AchievementSystem {
     onGameStart() {
          (`🚀 onGameStart called - current totalRuns: ${this.stats.totalRuns}`);
         this.stats.totalRuns++;
+        this.stats.currentRunDataPackets = 0;
+        this.stats.currentRunHazardsDodged = 0;
          (`🚀 after increment - totalRuns: ${this.stats.totalRuns}`);
         this.checkAchievements();
         this.saveAchievementData();
@@ -144,7 +335,7 @@ export class AchievementSystem {
     /**
      * Track when a game ends
      */
-    onGameEnd(finalScore, survivalTime, startTime) {
+    onGameEnd(finalScore, survivalTime, reason = '') {
         const distance = finalScore;
         const timeInSeconds = survivalTime;
         
@@ -159,11 +350,34 @@ export class AchievementSystem {
                 this.stats.bestTime = timeInSeconds;
             }
         }
+
+        if (timeInSeconds > this.stats.longestSurvivalTime) {
+            this.stats.longestSurvivalTime = timeInSeconds;
+        }
+
+        if (this.stats.currentRunDataPackets > this.stats.bestRunDataPackets) {
+            this.stats.bestRunDataPackets = this.stats.currentRunDataPackets;
+        }
+
+        if (this.stats.currentRunHazardsDodged > this.stats.bestHazardsDodgedRun) {
+            this.stats.bestHazardsDodgedRun = this.stats.currentRunHazardsDodged;
+        }
         
         // Track death statistics
         this.stats.totalDeaths++;
         if (distance < 100) {
             this.stats.deathsUnder100m++;
+        }
+
+        if (typeof reason === 'string') {
+            const normalizedReason = reason.toLowerCase();
+            if (normalizedReason.includes('spike')) {
+                this.stats.spikeDeaths++;
+            }
+
+            if (normalizedReason.includes('deletion wave') || normalizedReason.includes('corruption wave')) {
+                this.stats.deletionWaveDeaths++;
+            }
         }
         
         // Track milestone runs
@@ -182,8 +396,25 @@ export class AchievementSystem {
     /**
      * Track data packet collection
      */
-    onDataPacketCollected(points) {
-        this.stats.totalDataPacketsCollected += points;
+    onDataPacketCollected(packetCount = 1) {
+        this.stats.totalDataPacketsCollected += Math.max(0, packetCount);
+        this.stats.currentRunDataPackets += Math.max(0, packetCount);
+
+        if (this.stats.currentRunDataPackets > this.stats.bestRunDataPackets) {
+            this.stats.bestRunDataPackets = this.stats.currentRunDataPackets;
+        }
+
+        this.checkAchievements();
+        this.saveAchievementData();
+    }
+
+    onHazardDodged(count = 1) {
+        this.stats.currentRunHazardsDodged += Math.max(0, count);
+
+        if (this.stats.currentRunHazardsDodged > this.stats.bestHazardsDodgedRun) {
+            this.stats.bestHazardsDodgedRun = this.stats.currentRunHazardsDodged;
+        }
+
         this.checkAchievements();
         this.saveAchievementData();
     }
@@ -249,6 +480,7 @@ export class AchievementSystem {
         
         this.unlockedAchievements.add(achievementId);
         this.achievements[achievementId].unlocked = true;
+        this.unlockedAt[achievementId] = this.unlockedAt[achievementId] || Date.now();
            (`🏆 Achievement unlocked: ${this.achievements[achievementId].name}`);
         
         // Show achievement hint for first-time unlock
@@ -430,7 +662,10 @@ export class AchievementSystem {
     getAllAchievements() {
         return Object.values(this.achievements).map(achievement => ({
             ...achievement,
-            unlocked: this.unlockedAchievements.has(achievement.id)
+            unlocked: this.unlockedAchievements.has(achievement.id),
+            unlockDate: this.unlockedAt[achievement.id] || null,
+            progress: typeof achievement.getProgress === 'function' ? achievement.getProgress() : undefined,
+            target: achievement.target
         }));
     }
     
@@ -455,6 +690,7 @@ export class AchievementSystem {
         try {
             const data = {
                 unlockedAchievements: Array.from(this.unlockedAchievements),
+                unlockedAt: this.unlockedAt,
                 stats: {
                     ...this.stats,
                     customizationsUsed: Array.from(this.stats.customizationsUsed)
@@ -499,6 +735,10 @@ export class AchievementSystem {
                         }
                     });
                 }
+
+                if (data.unlockedAt && typeof data.unlockedAt === 'object') {
+                    this.unlockedAt = { ...data.unlockedAt };
+                }
                 
                 // Load stats
                 if (data.stats) {
@@ -540,6 +780,10 @@ export class AchievementSystem {
                         }
                     });
                 }
+
+                if (achievementData.unlockedAt && typeof achievementData.unlockedAt === 'object') {
+                    this.unlockedAt = { ...achievementData.unlockedAt };
+                }
                 
                 // Load stats
                 if (achievementData.stats) {
@@ -567,6 +811,7 @@ export class AchievementSystem {
     getSaveData() {
         return {
             unlockedAchievements: Array.from(this.unlockedAchievements),
+            unlockedAt: this.unlockedAt,
             stats: {
                 ...this.stats,
                 customizationsUsed: Array.from(this.stats.customizationsUsed)
@@ -597,15 +842,23 @@ export class AchievementSystem {
         this.stats = {
             totalRuns: 0,
             totalDataPacketsCollected: 0,
+            currentRunDataPackets: 0,
+            bestRunDataPackets: 0,
+            currentRunHazardsDodged: 0,
+            bestHazardsDodgedRun: 0,
             bestDistance: 0,
             bestTime: 0,
+            longestSurvivalTime: 0,
             totalDeaths: 0,
             deathsUnder100m: 0,
+            spikeDeaths: 0,
+            deletionWaveDeaths: 0,
             runsOver500m: 0,
             runsOver2000m: 0,
             customizationsUsed: new Set(),
             profileNameSet: false
         };
+        this.unlockedAt = {};
         
         Object.values(this.achievements).forEach(achievement => {
             achievement.unlocked = false;
@@ -625,15 +878,20 @@ export class AchievementSystem {
                 break;
                 
             case 'gameEnd':
-                if (data.distance && data.runTime) {
-                    this.onGameEnd(data.distance, data.runTime / 1000, 0);
+                if (typeof data.distance === 'number' && typeof data.runTime === 'number') {
+                    this.onGameEnd(data.distance, data.runTime / 1000, data.reason || '');
                 }
                 break;
                 
             case 'dataPacketCollected':
-                if (data.points) {
-                    this.onDataPacketCollected(data.points);
+                if (data.packetCount || data.points) {
+                    const packetCount = data.packetCount || Math.max(1, Math.round((data.points || 0) / 10));
+                    this.onDataPacketCollected(packetCount);
                 }
+                break;
+
+            case 'hazardDodged':
+                this.onHazardDodged(data.count || 1);
                 break;
                 
             case 'cosmeticEquipped':
@@ -824,6 +1082,8 @@ export class AchievementSystem {
         const categories = [
             { id: 'all', name: 'All', icon: '🌟' },
             { id: 'progress', name: 'Progress', icon: '🚀' },
+            { id: 'skill', name: 'Skill', icon: '⚡' },
+            { id: 'collection', name: 'Collect', icon: '📦' },
             { id: 'death', name: 'Death', icon: '💀' },
             { id: 'customization', name: 'Style', icon: '🎨' },
             { id: 'meta', name: 'Meta', icon: '🧠' }
@@ -912,7 +1172,7 @@ export class AchievementSystem {
      */
     drawAchievementsGrid(ctx, width, height, hitAreas, time = 0) {
         const currentCategory = this.gameInstance?.achievementCategory || this.currentCategoryFilter || 'all';
-        const achievementList = Object.values(this.achievements);
+        const achievementList = this.getAllAchievements();
         
         // Filter achievements by category
         const filteredAchievements = currentCategory === 'all' ? 
@@ -922,8 +1182,8 @@ export class AchievementSystem {
         // Sort achievements (unlocked first, then by rarity)
         const rarityOrder = { legendary: 4, epic: 3, rare: 2, common: 1 };
         filteredAchievements.sort((a, b) => {
-            const aUnlocked = this.unlockedAchievements.has(a.id);
-            const bUnlocked = this.unlockedAchievements.has(b.id);
+            const aUnlocked = a.unlocked;
+            const bUnlocked = b.unlocked;
             
             if (aUnlocked !== bUnlocked) {
                 return bUnlocked - aUnlocked; // Unlocked first
@@ -1126,6 +1386,16 @@ export class AchievementSystem {
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('✓ UNLOCKED', badgeX + badgeWidth / 2, badgeY + badgeHeight / 2);
+
+            if (achievement.unlockDate) {
+                const unlockedDate = new Date(achievement.unlockDate);
+                const formattedDate = unlockedDate.toLocaleDateString();
+                ctx.font = '10px "Segoe UI", Arial, sans-serif';
+                ctx.fillStyle = '#8b949e';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'top';
+                ctx.fillText(`Unlocked ${formattedDate}`, x + width - 15, badgeY + badgeHeight + 4);
+            }
         } else {
             ctx.fillStyle = 'rgba(239, 68, 68, 0.2)';
             this.drawRoundedRect(ctx, badgeX, badgeY, badgeWidth, badgeHeight, 11);
@@ -1423,6 +1693,8 @@ export class AchievementSystem {
         const categories = [
             { id: 'all', name: 'All', icon: '🌟' },
             { id: 'progress', name: 'Progress', icon: '🚀' },
+            { id: 'skill', name: 'Skill', icon: '⚡' },
+            { id: 'collection', name: 'Collect', icon: '📦' },
             { id: 'death', name: 'Death', icon: '💀' },
             { id: 'customization', name: 'Style', icon: '🎨' },
             { id: 'meta', name: 'Meta', icon: '🧠' }

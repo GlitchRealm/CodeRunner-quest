@@ -20,7 +20,7 @@ export class WorldGenerator {
         this.currentDistance = 0;
         this.lastSpikeWorldX = -10;
         this.lastPlatformSpikePos = { x: -10, y: -10 }; // Track last platform spike position
-        this.tileRenderer = new TileRenderer();
+        this.tileRenderer = new TileRenderer(game);
         this.TILE_TYPES = TILE_TYPES; // Make TILE_TYPES accessible to other classes
         this.obstaclePositions = []; // Track all obstacle positions for spacing
         this.sawPositions = []; // Separate tracking for saws to allow closer placement
@@ -85,8 +85,12 @@ export class WorldGenerator {
      * Initialize the world generator
      */
     initialize() {
-        // Force generation of spawn chunk immediately
-        this.generateChunk(0);
+        // Pre-generate an initial chunk window so both timeline layers are memory-ready at start.
+        const initialEndChunk = Math.max(0, GAME_CONFIG.GENERATION_DISTANCE + 2);
+        for (let chunkX = 0; chunkX <= initialEndChunk; chunkX++) {
+            this.generateChunk(chunkX);
+        }
+        this.lastGeneratedChunk = Math.max(this.lastGeneratedChunk, initialEndChunk);
     }
     
     update(deltaTime, camera) {
@@ -158,23 +162,25 @@ export class WorldGenerator {
         }
         
         this.lastGeneratedChunk = Math.max(this.lastGeneratedChunk, maxChunk);
-    }      generateChunk(chunkX) {
+    }
+
+    generateChunk(chunkX) {
         if (this.chunks.has(chunkX)) return;
         
         const chunk = {
             x: chunkX,
             tiles: [],
+            tiles_normal: [],
+            tiles_corrupt: [],
+            timeline_tags_normal: [],
+            timeline_tags_corrupt: [],
             generated: true,
             terrainType: this.determineTerrainType(chunkX)
         };
         
-        // Initialize empty chunk
-        for (let y = 0; y < GAME_CONFIG.CHUNK_HEIGHT; y++) {
-            chunk.tiles[y] = [];
-            for (let x = 0; x < GAME_CONFIG.CHUNK_WIDTH; x++) {
-                chunk.tiles[y][x] = TILE_TYPES.EMPTY;
-            }
-        }
+        // Build and generate against the normal layer (backward-compatible `chunk.tiles` alias).
+        chunk.tiles_normal = this.createEmptyTileLayer();
+        chunk.tiles = chunk.tiles_normal;
         
         // Update ground level for variation (except spawn chunk)
         if (chunkX > 0) {
@@ -192,8 +198,141 @@ export class WorldGenerator {
         if (chunkX > 2 && Math.random() < patternChance && chunk.terrainType !== 'spawn') {
             this.generateObstaclePattern(chunk, chunkX);
         }
+
+        // Precompute corrupt layer so both timeline variants are always in memory.
+        chunk.tiles_corrupt = this.buildCorruptTileLayer(chunk.tiles_normal, chunkX);
+        chunk.timeline_tags_normal = this.buildTimelineTagLayer(chunk.tiles_normal, 'normal');
+        chunk.timeline_tags_corrupt = this.buildTimelineTagLayer(chunk.tiles_corrupt, 'corrupt');
         
         this.chunks.set(chunkX, chunk);
+    }
+
+    createEmptyTileLayer() {
+        const tiles = [];
+        for (let y = 0; y < GAME_CONFIG.CHUNK_HEIGHT; y++) {
+            tiles[y] = [];
+            for (let x = 0; x < GAME_CONFIG.CHUNK_WIDTH; x++) {
+                tiles[y][x] = TILE_TYPES.EMPTY;
+            }
+        }
+        return tiles;
+    }
+
+    cloneTileLayer(tiles) {
+        return tiles.map((row) => row.slice());
+    }
+
+    buildCorruptTileLayer(normalTiles, chunkX) {
+        const corruptTiles = this.cloneTileLayer(normalTiles);
+
+        // Keep spawn chunk identical for predictable starts.
+        if (chunkX === 0) {
+            this.removeBonusCoinsFromLayer(corruptTiles);
+            return corruptTiles;
+        }
+
+        // Bonus coins (data packets) should only exist in normal timeline.
+        this.removeBonusCoinsFromLayer(corruptTiles);
+
+        // Lightweight deterministic corruption pass for future timeline switching.
+        for (let y = 1; y < GAME_CONFIG.CHUNK_HEIGHT; y++) {
+            for (let x = 0; x < GAME_CONFIG.CHUNK_WIDTH; x++) {
+                const tile = corruptTiles[y][x];
+                if (tile !== TILE_TYPES.FLOOR) continue;
+
+                const tileAbove = corruptTiles[y - 1][x];
+                const hash = Math.abs(((chunkX + 1) * 73856093) ^ ((x + 1) * 19349663) ^ ((y + 1) * 83492791));
+
+                if (tileAbove === TILE_TYPES.EMPTY && hash % 100 < 8) {
+                    corruptTiles[y - 1][x] = TILE_TYPES.GLITCH;
+                }
+
+                // Corrupted-only breakable wall clusters.
+                if (
+                    y - 2 >= 0 &&
+                    tileAbove === TILE_TYPES.EMPTY &&
+                    corruptTiles[y - 2][x] === TILE_TYPES.EMPTY &&
+                    hash % 100 < 5
+                ) {
+                    corruptTiles[y - 1][x] = TILE_TYPES.BREAKABLE_WALL;
+
+                    // Occasionally stack into a short 2-tile wall.
+                    if (hash % 10 < 4) {
+                        corruptTiles[y - 2][x] = TILE_TYPES.BREAKABLE_WALL;
+                    }
+                }
+            }
+        }
+
+        this.applyCorruptVariantRules(corruptTiles, chunkX);
+
+        return corruptTiles;
+    }
+
+    applyCorruptVariantRules(tiles, chunkX) {
+        // Corrupted timeline gets denser hazards.
+        for (let y = 1; y < GAME_CONFIG.CHUNK_HEIGHT; y++) {
+            for (let x = 0; x < GAME_CONFIG.CHUNK_WIDTH; x++) {
+                if (tiles[y][x] !== TILE_TYPES.FLOOR) continue;
+                if (tiles[y - 1][x] !== TILE_TYPES.EMPTY) continue;
+
+                const hazardHash = Math.abs(((chunkX + 7) * 92821) ^ ((x + 3) * 421) ^ ((y + 11) * 827));
+                const hazardRoll = hazardHash % 100;
+
+                if (hazardRoll < 11) {
+                    tiles[y - 1][x] = TILE_TYPES.SPIKE;
+                } else if (hazardRoll >= 11 && hazardRoll < 14) {
+                    tiles[y - 1][x] = TILE_TYPES.SAW;
+                } else if (hazardRoll >= 14 && hazardRoll < 16 && y - 2 >= 0 && tiles[y - 2][x] === TILE_TYPES.EMPTY) {
+                    // Corrupted-only enemy placeholder: glitch drone hovering above lanes.
+                    tiles[y - 2][x] = TILE_TYPES.GLITCH_DRONE;
+                }
+            }
+        }
+
+        // Corrupted timeline also gets shortcut bridges across single-tile gaps.
+        for (let y = 0; y < GAME_CONFIG.CHUNK_HEIGHT; y++) {
+            for (let x = 1; x < GAME_CONFIG.CHUNK_WIDTH - 1; x++) {
+                if (tiles[y][x] !== TILE_TYPES.EMPTY) continue;
+                if (tiles[y][x - 1] !== TILE_TYPES.FLOOR || tiles[y][x + 1] !== TILE_TYPES.FLOOR) continue;
+
+                const shortcutHash = Math.abs(((chunkX + 19) * 6151) ^ ((x + 29) * 2671) ^ ((y + 23) * 977));
+                if (shortcutHash % 100 < 34) {
+                    tiles[y][x] = TILE_TYPES.FLOOR;
+                }
+            }
+        }
+    }
+
+    removeBonusCoinsFromLayer(tiles) {
+        for (let y = 0; y < GAME_CONFIG.CHUNK_HEIGHT; y++) {
+            for (let x = 0; x < GAME_CONFIG.CHUNK_WIDTH; x++) {
+                if (tiles[y][x] === TILE_TYPES.DATA_PACKET) {
+                    tiles[y][x] = TILE_TYPES.EMPTY;
+                }
+            }
+        }
+    }
+
+    buildTimelineTagLayer(tiles, timeline) {
+        const tagLayer = this.createEmptyTileLayer();
+        const taggedTiles = new Set([
+            TILE_TYPES.DATA_PACKET,
+            TILE_TYPES.SPIKE,
+            TILE_TYPES.SAW,
+            TILE_TYPES.LASER,
+            TILE_TYPES.CRUSHER,
+            TILE_TYPES.GLITCH_DRONE
+        ]);
+
+        for (let y = 0; y < GAME_CONFIG.CHUNK_HEIGHT; y++) {
+            for (let x = 0; x < GAME_CONFIG.CHUNK_WIDTH; x++) {
+                const tileType = tiles[y][x];
+                tagLayer[y][x] = taggedTiles.has(tileType) ? timeline : TILE_TYPES.EMPTY;
+            }
+        }
+
+        return tagLayer;
     }
     
     /**
@@ -850,7 +989,7 @@ export class WorldGenerator {
             }
         }
     }
-      getTileAt(worldX, worldY) {
+    getTileAt(worldX, worldY) {
         const chunkX = Math.floor(worldX / GAME_CONFIG.CHUNK_WIDTH);
         const chunk = this.chunks.get(chunkX);
         
@@ -862,8 +1001,47 @@ export class WorldGenerator {
         if (tileX < 0 || tileX >= GAME_CONFIG.CHUNK_WIDTH || tileY < 0 || tileY >= GAME_CONFIG.CHUNK_HEIGHT) {
             return TILE_TYPES.EMPTY;
         }
-        
-        return chunk.tiles[tileY][tileX];
+
+        const layerTiles = this.getChunkLayerTiles(chunk);
+        if (!layerTiles) return TILE_TYPES.EMPTY;
+
+        return layerTiles[tileY][tileX];
+    }
+
+    getTileTimelineTag(worldX, worldY, tileType = null) {
+        const chunkX = Math.floor(worldX / GAME_CONFIG.CHUNK_WIDTH);
+        const chunk = this.chunks.get(chunkX);
+        if (!chunk) return null;
+
+        const tileX = worldX % GAME_CONFIG.CHUNK_WIDTH;
+        const tileY = worldY;
+        if (tileX < 0 || tileX >= GAME_CONFIG.CHUNK_WIDTH || tileY < 0 || tileY >= GAME_CONFIG.CHUNK_HEIGHT) {
+            return null;
+        }
+
+        const normalTile = chunk.tiles_normal?.[tileY]?.[tileX];
+        const corruptTile = chunk.tiles_corrupt?.[tileY]?.[tileX];
+        const normalTag = chunk.timeline_tags_normal?.[tileY]?.[tileX];
+        const corruptTag = chunk.timeline_tags_corrupt?.[tileY]?.[tileX];
+
+        const normalMatch =
+            normalTag === 'normal' && (tileType === null ? normalTile !== TILE_TYPES.EMPTY : normalTile === tileType);
+        const corruptMatch =
+            corruptTag === 'corrupt' && (tileType === null ? corruptTile !== TILE_TYPES.EMPTY : corruptTile === tileType);
+
+        if (normalMatch && corruptMatch) return 'both';
+        if (normalMatch) return 'normal';
+        if (corruptMatch) return 'corrupt';
+        return null;
+    }
+
+    isTileActiveInCurrentTimeline(worldX, worldY, tileType = null) {
+        const tileTimeline = this.getTileTimelineTag(worldX, worldY, tileType);
+        if (!tileTimeline) return false;
+        if (tileTimeline === 'both') return true;
+
+        const currentTimeline = this.game && this.game.currentTimeline === 'corrupt' ? 'corrupt' : 'normal';
+        return tileTimeline === currentTimeline;
     }
     
     setTileAt(worldX, worldY, tileType) {
@@ -878,15 +1056,39 @@ export class WorldGenerator {
         if (tileX < 0 || tileX >= GAME_CONFIG.CHUNK_WIDTH || tileY < 0 || tileY >= GAME_CONFIG.CHUNK_HEIGHT) {
             return;
         }
-        
-        chunk.tiles[tileY][tileX] = tileType;
+
+        const activeLayerKey = this.getActiveTimelineLayerKey();
+        const activeTagLayerKey = activeLayerKey === 'tiles_corrupt' ? 'timeline_tags_corrupt' : 'timeline_tags_normal';
+
+        const activeTiles = chunk[activeLayerKey] || chunk.tiles_normal || chunk.tiles;
+        activeTiles[tileY][tileX] = tileType;
+
+        const taggedTiles = new Set([
+            TILE_TYPES.DATA_PACKET,
+            TILE_TYPES.SPIKE,
+            TILE_TYPES.SAW,
+            TILE_TYPES.LASER,
+            TILE_TYPES.CRUSHER,
+            TILE_TYPES.GLITCH_DRONE
+        ]);
+
+        if (chunk[activeTagLayerKey]) {
+            chunk[activeTagLayerKey][tileY][tileX] = taggedTiles.has(tileType)
+                ? (activeLayerKey === 'tiles_corrupt' ? 'corrupt' : 'normal')
+                : TILE_TYPES.EMPTY;
+        }
+
+        // Keep legacy alias pointing to normal layer for compatibility.
+        chunk.tiles = chunk.tiles_normal || chunk.tiles;
     }
     
     getTileAtPixel(pixelX, pixelY) {
         const tileX = Math.floor(pixelX / GAME_CONFIG.TILE_SIZE);
         const tileY = Math.floor(pixelY / GAME_CONFIG.TILE_SIZE);
         return this.getTileAt(tileX, tileY);
-    }    draw(ctx, camera) {
+    }
+
+    draw(ctx, camera) {
         const startChunk = Math.max(0, Math.floor(camera.x / (GAME_CONFIG.CHUNK_WIDTH * GAME_CONFIG.TILE_SIZE)) - 1);
         const endChunk = Math.ceil((camera.x + ctx.canvas.width) / (GAME_CONFIG.CHUNK_WIDTH * GAME_CONFIG.TILE_SIZE)) + 1;
         
@@ -903,7 +1105,20 @@ export class WorldGenerator {
         for (const chunkX of this.visibleChunks) {
             this.drawChunk(ctx, camera, chunkX);
         }
-    }    drawChunk(ctx, camera, chunkX) {
+    }
+
+    getActiveTimelineLayerKey() {
+        return this.game && this.game.currentTimeline === 'corrupt' ? 'tiles_corrupt' : 'tiles_normal';
+    }
+
+    getChunkLayerTiles(chunk) {
+        if (!chunk) return null;
+
+        const activeLayerKey = this.getActiveTimelineLayerKey();
+        return chunk[activeLayerKey] || chunk.tiles_normal || chunk.tiles;
+    }
+
+    drawChunk(ctx, camera, chunkX) {
         // Safety check for camera
         if (!camera || !isFinite(camera.x) || !isFinite(camera.y)) {
             console.warn('WorldGenerator.drawChunk: Invalid camera', camera);
@@ -912,25 +1127,35 @@ export class WorldGenerator {
 
         const chunk = this.chunks.get(chunkX);
         if (!chunk) return;
+
+        const layerTiles = this.getChunkLayerTiles(chunk);
+        if (!layerTiles) return;
         
         const chunkPixelX = chunkX * GAME_CONFIG.CHUNK_WIDTH * GAME_CONFIG.TILE_SIZE;
         
         for (let y = 0; y < GAME_CONFIG.CHUNK_HEIGHT; y++) {
             for (let x = 0; x < GAME_CONFIG.CHUNK_WIDTH; x++) {
-                const tileType = chunk.tiles[y][x];
+                const tileType = layerTiles[y][x];
                 if (tileType === TILE_TYPES.EMPTY) continue;
                 
                 const worldX = chunkPixelX + x * GAME_CONFIG.TILE_SIZE;
                 const worldY = y * GAME_CONFIG.TILE_SIZE;
                 const screenX = worldX - camera.x;
                 const screenY = worldY - camera.y;
+                const worldTileX = chunkX * GAME_CONFIG.CHUNK_WIDTH + x;
+                const worldTileY = y;
                 
                 if (screenX < -GAME_CONFIG.TILE_SIZE || screenX > ctx.canvas.width + GAME_CONFIG.TILE_SIZE) continue;
                 
-                this.tileRenderer.drawTile(ctx, tileType, screenX, screenY);
+                this.tileRenderer.drawTile(ctx, tileType, screenX, screenY, {
+                    tileX: worldTileX,
+                    tileY: worldTileY
+                });
             }
         }
-    }findSafeSpawnPosition() {
+    }
+
+    findSafeSpawnPosition() {
         if (!this.chunks.has(0)) {
             this.generateChunk(0);
         }

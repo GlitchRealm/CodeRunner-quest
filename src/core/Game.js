@@ -75,6 +75,16 @@ export class Game {
         this.lastFrameCount = 0;
         this.lastFpsUpdate = 0;
 
+        // Time-swap global state (System 1 foundation)
+        this.currentTimeline = 'normal';
+        this.timelineLimits = {
+            corruptedMaxMs: 5000,
+            corruptedRemainingMs: 5000,
+            overheatWarningMs: 0,
+            swapLockoutDurationMs: 3000,
+            swapLockoutMs: 0
+        };
+
         // Game objects
         this.player = null;
         this.world = null;
@@ -124,6 +134,29 @@ export class Game {
         this.speedPenalty = {
             enabled: true, segmentDistance: 1000, timeLimit: 15000, penalty: 100,
             lastCheckpoint: 0, segmentStartTime: 0, totalPenalties: 0, totalPenaltyPoints: 0
+        };
+
+        // Memory maze trigger progression (System 2)
+        this.memoryMazeState = {
+            triggerIntervalMeters: 1000,
+            nextTriggerMeters: 1000,
+            triggeredMilestones: [],
+            pendingMilestoneMeters: null,
+            active: false,
+            lockCamera: false,
+            cameraLockX: 0,
+            cameraLockY: 0,
+            roomBounds: null,
+            roomStartedAt: 0,
+            distanceCounterDisabled: false,
+            frozenDistanceMeters: 0,
+            spikeBlinkDurationMs: 3000,
+            spikeRevealEndsAt: 0,
+            spikeBlinkActive: false,
+            spikesHidden: false,
+            roomSpikeTileKeys: [],
+            roomMisdirectionTiles: [],
+            misdirectionTilesCollapsed: false
         };
 
         // UI state

@@ -365,6 +365,10 @@ export class UserProfileSystem {
      */
     async saveUserProfile() {
         if (!this.database || !this.currentUser || !this.userProfile) return;
+
+        if (this.userProfile.avatar && this.game?.achievementSystem) {
+            this.game.achievementSystem.trackEvent('customProfilePicture');
+        }
         
         // Prepare profile data outside try-catch so it's accessible in fallback
         this.userProfile.updatedAt = new Date().toISOString();
@@ -754,6 +758,10 @@ export class UserProfileSystem {
             if (this.userProfile) {
                 this.userProfile.displayName = displayName;
                 await this.saveUserProfile();
+            }
+
+            if (this.game?.achievementSystem) {
+                this.game.achievementSystem.trackEvent('profileNameSet', { name: displayName });
             }
             
             this.showSuccess('Display name updated successfully!');

@@ -3,36 +3,50 @@
  * Centralized configuration for Firebase services
  */
 
+// Read environment values safely across browser/bundler contexts.
+const readEnv = (key) => {
+    // Runtime-injected config (preferred for static hosting like Netlify without bundling)
+    if (typeof window !== 'undefined' && window.__FIREBASE_CONFIG__ && window.__FIREBASE_CONFIG__[key]) {
+        return window.__FIREBASE_CONFIG__[key];
+    }
+
+    // Vite/ESM envs if bundling is introduced later
+    try {
+        if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[`VITE_FIREBASE_${key.toUpperCase()}`]) {
+            return import.meta.env[`VITE_FIREBASE_${key.toUpperCase()}`];
+        }
+    } catch (e) {
+        // no-op in non-ESM contexts
+    }
+
+    // Node-style env fallback (for tests/build tooling)
+    if (typeof process !== 'undefined' && process.env && process.env[`VITE_FIREBASE_${key.toUpperCase()}`]) {
+        return process.env[`VITE_FIREBASE_${key.toUpperCase()}`];
+    }
+
+    return '';
+};
+
 // Environment-based configuration
 const getFirebaseConfig = () => {
-    // Check if we're in production, development, or local environment
-    const isProduction = window.location.hostname === 'your-production-domain.com';
-    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    
-    // Production config
-    const productionConfig = {
-      apiKey: "AIzaSyC3Sf6r81WojKrRUP-tmirHG9nW5Lytqvc",
-      authDomain: "coderunner-9e199.firebaseapp.com",
-      databaseURL: "https://coderunner-9e199-default-rtdb.firebaseio.com",
-      projectId: "coderunner-9e199",
-      storageBucket: "coderunner-9e199.firebasestorage.app",
-      messagingSenderId: "593312008496",
-      appId: "1:593312008496:web:fc12738c8ff2946138e0f5",
-      measurementId: "G-Y547G4S17C"
+    const runtimeConfig = {
+        apiKey: readEnv('api_key'),
+        authDomain: readEnv('auth_domain'),
+        databaseURL: readEnv('database_url'),
+        projectId: readEnv('project_id'),
+        storageBucket: readEnv('storage_bucket'),
+        messagingSenderId: readEnv('messaging_sender_id'),
+        appId: readEnv('app_id'),
+        measurementId: readEnv('measurement_id')
     };
-    
-    // Development config (can be same as production or different)
-    const developmentConfig = {
-        ...productionConfig
-        // Override with development-specific settings if needed
-    };
-    
-    // Return appropriate config based on environment
-    if (isProduction) {
-        return productionConfig;
-    } else {
-        return developmentConfig;
+
+    const required = ['apiKey', 'authDomain', 'projectId', 'appId'];
+    const missing = required.filter((k) => !runtimeConfig[k]);
+    if (missing.length > 0) {
+        console.warn('Firebase config missing required values:', missing.join(', '));
     }
+
+    return runtimeConfig;
 };
 
 export const firebaseConfig = getFirebaseConfig();

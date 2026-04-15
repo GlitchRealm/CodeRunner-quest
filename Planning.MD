@@ -1,114 +1,5 @@
-Always do the first unclompted task from planning.MD whenever i say "n". whenever you finish a task, mark it as completed. go above and beyond on the tasks, think big. Remember to kee file sizes small and organized. and dont add onsole logs unless debugging. but once done debugging delete console logs. 
-🏆 Core Progress Achievements
-These reward distance and survival milestones:
-
-**Booted Up** 🚀
-Make your first run.
-➤ Unlock when the player starts the game for the first time.
-
-**Packet Runner** 💯
-Reach 100m in a single run.
-➤ Basic distance milestone for new players.
-
-**Half Kilometer** 🏃
-Reach 500m in a single run.
-➤ Shows player is getting comfortable with controls.
-
-**Kilometer Club** 🎯
-Reach 1000m in one run.
-➤ Major milestone - you're getting serious!
-
-**Mainframe Breaker** 🔥
-Reach 2000m in one run.
-➤ Elite distance achievement.
-
-⚡ Skill-Based Achievements
-Rewards for doing well with timing, survival, or risk:
-
-
-
-
-**Firewall Jumper** 🛡️
-Dodge 50 hazards in one run.
-➤ General survival achievement.
-
-📦 Collection Achievements
-Reward exploration and risk-taking:
-
-**Data Collector** 📦
-Collect your first data packet from the digital world.
-➤ Tutorial achievement for new players.
-
-**Packet Hunter** 🎯
-Collect 50 data packets in a single run.
-➤ Encourages risky packet collection.
-
-**Collector Glitch** 💎
-Collect 10,000 datapackets total across all runs.
-➤ Long-term progression goal.
-
-💀 Death-Based Achievements
-Funny or ironic ones for dying:
-
-**404 – Skill Not Found** 💀
-Die within the first 100m.
-➤ Humorous achievement for new players.
-
-**Spike Magnet** 🧲
-Die to spikes 10 times total.
-➤ Common death type achievement.
-
-**Deletion Protocol** ⚠️
-Get caught by the deletion wave.
-➤ Specific death type achievement.
-
-🎨 Customization Achievements
-Encourage exploring player features:
-
-**Style.exe** 👕
-Equip a cosmetic skin.
-➤ Unlocks when player uses the shop.
-
-**Pixel You** 🎨
-Draw and save a custom profile picture.
-➤ Customization achievement.
-
-**Title Hacker** 📝
-Set your display name from the profile screen.
-➤ Profile customization.
-
-🧠 Meta Achievements
-Cool stuff that shows deep play:
-
-
-
-**Data Godspeed** ⚡
-Reach 1000m in under 2 minutes.
-➤ Speed run achievement.
-
-**Network Survivor** 🛡️
-Survive for 5 minutes in a single run.
-➤ Endurance achievement.
-
-**Achievement Hunter** 🏆
-Unlock 75% of all achievements.
-➤ Meta-achievement for completionists.
-
-🎖️ **RARITY SYSTEM**
-- **Common** (Gray): Basic progression achievements
-- **Rare** (Blue): Skill-based achievements requiring practice  
-- **Epic** (Purple): Difficult achievements requiring mastery
-- **Legendary** (Gold): Extremely rare achievements for elite players
-
-🎮 **ACHIEVEMENT FEATURES**
-- **Progress Tracking**: Locked achievements show current progress vs target
-- **Unlock Dates**: Completed achievements display when they were earned
-- **Rarity Indicators**: Visual rarity system with color coding
-- **Persistent Storage**: Achievement progress saved across sessions
-- **Notification System**: In-game popups when achievements are unlocked
-
-
-
+Always do the first unclompted task from planning.MD whenever i say "n". whenever you finish a task, mark it as completed. go above and beyond on the tasks, think big. Remember to kee file sizes small and organized. and dont add console logs unless debugging. but once done debugging delete console logs. 
+can you improve the planning doc, so it makes more sense to you and is more organized. But most importantly, make it have the actual things you plan on adding, along with example code and UI structure
 
 Phase 3 — Unique Gameplay Systems (FINAL DETAILED VERSION)
 This phase introduces three original systems that make CodeRunner stand out and keep the gameplay non-repetitive, skill-based, and addictive across long runs.
@@ -127,53 +18,45 @@ Build levels with dual-purpose design.
 Task Breakdown
 1. Core Architecture
 
- Define currentTimeline as a global state variable.
-
- Create two tilemap layers per segment (e.g. tiles_normal, tiles_corrupt)
-
- Build tile rendering logic to only draw the active layer.
-
- Load both versions into memory at start (don't re-fetch on swap).
-
- Add timeline tags to hazards/coins so they only activate in the right layer.
+- [x] Add timeline tags to hazards/coins so they only activate in the right layer.
 
 2. Swap Mechanism
 
- On E key press, toggle timeline.
+- [x] On E key press, toggle timeline.
 
- Animate glitch swap: use CRT screen distortion, 1-frame color inversion, then a hue shift.
+- [x] Animate glitch swap: use CRT screen distortion, 1-frame color inversion, then a hue shift.
 
- Add glitchy SFX (glitch-swap.ogg).
+- [x] Add glitchy SFX (glitch-swap.ogg).
 
- Cancel jump momentum briefly during swap to avoid unfair movement bugs.
+- [x] Cancel jump momentum briefly during swap to avoid unfair movement bugs.
 
 3. Cooldown & Timer System
 
- Add a 5-second max limit in corrupted timeline.
+- [x] Add a 5-second max limit in corrupted timeline.
 
- Show countdown bar on top of screen (color-coded).
+- [x] Show countdown bar on top of screen (color-coded).
 
- When time ends, auto-swap and trigger "overheat" warning effect.
+- [x] When time ends, auto-swap and trigger "overheat" warning effect.
 
- Prevent player from swapping again for 3 seconds after overheating.
+- [x] Prevent player from swapping again for 3 seconds after overheating.
 
 4. Timeline-Specific Differences
 
- Breakable walls only visible in corrupted version.
+- [x] Breakable walls only visible in corrupted version.
 
- Bonus coins only available in normal version.
+- [x] Bonus coins only available in normal version.
 
- Corrupted version = more hazards but also short-cut tiles.
+- [x] Corrupted version = more hazards but also short-cut tiles.
 
- Add one enemy type (e.g. glitch drone) that only exists in corrupted space.
+- [x] Add one enemy type (e.g. glitch drone) that only exists in corrupted space.
 
 5. UX/Visual Feedback
 
- Top-right icon: timeline state ("N"/"C" with color tint)
+- [x] Top-right icon: timeline state ("N"/"C" with color tint)
 
- Change background palette slightly between timelines.
+- [x] Change background palette slightly between timelines.
 
- Add screen corner glitching as overlay for 0.3s during transition.
+- [x] Add screen corner glitching as overlay for 0.3s during transition.
 
 🧠 SYSTEM 2: Memory Maze Zone
 Overview
@@ -189,23 +72,23 @@ Make survival feel satisfying and rare.
 Task Breakdown
 1. Trigger & Level Logic
 
- Check for player reaching 1000m, 2000m, etc.
+- [x] Check for player reaching 1000m, 2000m, etc.
 
- Lock camera and insert custom tilemap for memory room (10x10 layout).
+- [x] Lock camera and insert custom tilemap for memory room (10x10 layout).
 
- Temporarily disable distance counter during this room.
+- [x] Temporarily disable distance counter during this room.
 
 2. Maze Layouts
 
- Make 6 layouts stored in JSON or JS objects (tiles + trap positions).
+- [x] Make 6 layouts stored in JSON or JS objects (tiles + trap positions).
 
- Design spike tiles to blink red before disappearing.
+- [x] Design spike tiles to blink red before disappearing.
 
- Add false paths and misdirection tiles.
+- [x] Add false paths and misdirection tiles.
 
 3. Reveal and Hide Phase
 
- Phase 1: All spike tiles visible for 3 seconds.
+- [x] Phase 1: All spike tiles visible for 3 seconds.
 
  Phase 2: Flash of glitch overlay → hide all spikes.
 

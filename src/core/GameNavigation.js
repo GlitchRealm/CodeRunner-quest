@@ -365,7 +365,8 @@ export class GameNavigation {
         if (this.game.achievementSystem && this.game.player) {
             const gameData = {
                 distance: this.game.score || 0,
-                runTime: (Date.now() - this.game.startTime) || 0
+                runTime: (Date.now() - this.game.startTime) || 0,
+                reason: reason || ''
             };
             this.game.achievementSystem.trackEvent('gameEnd', gameData);
         }
@@ -509,6 +510,34 @@ export class GameNavigation {
         // Reset visual effects
         this.game.milestoneEffects = [];
         this.game.speedPenaltyEffects = [];
+
+        // Reset time-swap global state
+        this.game.currentTimeline = 'normal';
+        if (this.game.timelineLimits) {
+            this.game.timelineLimits.corruptedRemainingMs = this.game.timelineLimits.corruptedMaxMs;
+            this.game.timelineLimits.overheatWarningMs = 0;
+            this.game.timelineLimits.swapLockoutMs = 0;
+        }
+
+        if (this.game.memoryMazeState) {
+            this.game.memoryMazeState.nextTriggerMeters = this.game.memoryMazeState.triggerIntervalMeters;
+            this.game.memoryMazeState.triggeredMilestones = [];
+            this.game.memoryMazeState.pendingMilestoneMeters = null;
+            this.game.memoryMazeState.active = false;
+            this.game.memoryMazeState.lockCamera = false;
+            this.game.memoryMazeState.cameraLockX = 0;
+            this.game.memoryMazeState.cameraLockY = 0;
+            this.game.memoryMazeState.roomBounds = null;
+            this.game.memoryMazeState.roomStartedAt = 0;
+            this.game.memoryMazeState.distanceCounterDisabled = false;
+            this.game.memoryMazeState.frozenDistanceMeters = 0;
+            this.game.memoryMazeState.spikeRevealEndsAt = 0;
+            this.game.memoryMazeState.spikeBlinkActive = false;
+            this.game.memoryMazeState.spikesHidden = false;
+            this.game.memoryMazeState.roomSpikeTileKeys = [];
+            this.game.memoryMazeState.roomMisdirectionTiles = [];
+            this.game.memoryMazeState.misdirectionTilesCollapsed = false;
+        }
         
         // Reset screen shake
         this.game.currentShake = { x: 0, y: 0, intensity: 0, duration: 0 };

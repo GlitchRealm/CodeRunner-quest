@@ -92,6 +92,26 @@ CodeRunner/
 
 ## 🔧 Development
 
+### Firebase Config (No Hardcoded Secrets)
+
+This project now reads Firebase config from runtime-injected values instead of committed keys.
+
+Local development options:
+1. Copy [env-config.example.js](env-config.example.js) to `env-config.js` and fill values.
+2. Or define values in `.env` using [.env.example](.env.example) (used by build tooling if introduced).
+
+Netlify deployment:
+1. Set these environment variables in Netlify Site settings:
+	- `VITE_FIREBASE_API_KEY`
+	- `VITE_FIREBASE_AUTH_DOMAIN`
+	- `VITE_FIREBASE_DATABASE_URL`
+	- `VITE_FIREBASE_PROJECT_ID`
+	- `VITE_FIREBASE_STORAGE_BUCKET`
+	- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+	- `VITE_FIREBASE_APP_ID`
+	- `VITE_FIREBASE_MEASUREMENT_ID`
+2. `netlify.toml` generates `env-config.js` during build from those vars.
+
 ### Code Organization
 
 - **Core**: Main game logic and classes

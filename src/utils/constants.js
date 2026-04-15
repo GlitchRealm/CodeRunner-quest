@@ -122,7 +122,9 @@ export const TILE_TYPES = {
     DATA_PACKET: 6,
     SAW: 7,
     LASER: 8,
-    CRUSHER: 9
+    CRUSHER: 9,
+    BREAKABLE_WALL: 10,
+    GLITCH_DRONE: 11
 };
 
 export const GAME_STATES = {

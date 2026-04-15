@@ -2,7 +2,8 @@
  * Game Loop and Update Logic - Main game loop, performance, and gameplay updates
  */
 
-import { GAME_STATES, DIFFICULTY_LEVELS } from '../utils/constants.js';
+import { GAME_STATES, DIFFICULTY_LEVELS, GAME_CONFIG, TILE_TYPES } from '../utils/constants.js';
+import { getMemoryMazeLayout, isValidMemoryMazeLayout } from './MemoryMazeLayouts.js';
 
 export class GameLoop {
     constructor(game) {
@@ -153,6 +154,9 @@ export class GameLoop {
      */
     updateGameplay() {
         if (!this.game.player || !this.game.world) return;
+
+        this.updateTimelineLimits(this.game.deltaTime);
+        this.updateMemoryMazeRoomFlow();
         
         // Always update quantum dash animation (even when paused, since it controls the pause)
         if (this.game.quantumDashAnimation) {
@@ -196,12 +200,227 @@ export class GameLoop {
         
         // Update score
         this.updateScore();
+
+        // Check memory maze distance milestones (1000m, 2000m, ...)
+        this.checkMemoryMazeMilestoneTriggers();
+        this.updateMemoryMazeRoomFlow();
+    }
+
+    updateMemoryMazeRoomFlow() {
+        const memoryMazeState = this.game.memoryMazeState;
+        const player = this.game.player;
+        const world = this.game.world;
+        if (!memoryMazeState || !player || !world) return;
+
+        if (!memoryMazeState.active && memoryMazeState.pendingMilestoneMeters !== null) {
+            this.activateMemoryMazeRoom(memoryMazeState.pendingMilestoneMeters);
+        }
+
+        if (!memoryMazeState.active || !memoryMazeState.roomBounds) return;
+
+        const now = Date.now();
+        const elapsed = now - memoryMazeState.roomStartedAt;
+        const roomExitX = memoryMazeState.roomBounds.maxX;
+
+        if (memoryMazeState.spikeRevealEndsAt <= 0) {
+            memoryMazeState.spikeRevealEndsAt = memoryMazeState.roomStartedAt + memoryMazeState.spikeBlinkDurationMs;
+        }
+
+        memoryMazeState.spikeBlinkActive = now < memoryMazeState.spikeRevealEndsAt;
+        memoryMazeState.spikesHidden = !memoryMazeState.spikeBlinkActive;
+
+        if (
+            !memoryMazeState.misdirectionTilesCollapsed &&
+            elapsed >= memoryMazeState.spikeBlinkDurationMs &&
+            Array.isArray(memoryMazeState.roomMisdirectionTiles)
+        ) {
+            for (const tile of memoryMazeState.roomMisdirectionTiles) {
+                world.setTileAt(tile.x, tile.y, TILE_TYPES.EMPTY);
+            }
+            memoryMazeState.misdirectionTilesCollapsed = true;
+        }
+
+        if (player.x > roomExitX + GAME_CONFIG.TILE_SIZE || elapsed > 20000) {
+            memoryMazeState.active = false;
+            memoryMazeState.lockCamera = false;
+            memoryMazeState.roomBounds = null;
+            memoryMazeState.cameraLockX = 0;
+            memoryMazeState.cameraLockY = 0;
+            memoryMazeState.distanceCounterDisabled = false;
+            memoryMazeState.spikeRevealEndsAt = 0;
+            memoryMazeState.spikeBlinkActive = false;
+            memoryMazeState.spikesHidden = false;
+            memoryMazeState.roomSpikeTileKeys = [];
+            memoryMazeState.roomMisdirectionTiles = [];
+            memoryMazeState.misdirectionTilesCollapsed = false;
+        }
+    }
+
+    activateMemoryMazeRoom(milestoneMeters) {
+        const memoryMazeState = this.game.memoryMazeState;
+        const world = this.game.world;
+        const player = this.game.player;
+        if (!memoryMazeState || !world || !player) return;
+
+        const layout = getMemoryMazeLayout(milestoneMeters);
+        if (!isValidMemoryMazeLayout(layout)) return;
+
+        const roomWidthTiles = 10;
+        const roomHeightTiles = 10;
+
+        const originTileX = Math.floor(player.x / GAME_CONFIG.TILE_SIZE) + 8;
+        const originTileY = 2;
+
+        // Build a 10x10 memory room from pre-defined layout data.
+        for (let y = 0; y < roomHeightTiles; y++) {
+            for (let x = 0; x < roomWidthTiles; x++) {
+                const worldTileX = originTileX + x;
+                const worldTileY = originTileY + y;
+
+                const tileCode = layout.tiles[y][x];
+                const tile = tileCode === 1 ? TILE_TYPES.FLOOR : TILE_TYPES.EMPTY;
+
+                world.setTileAt(worldTileX, worldTileY, tile);
+            }
+        }
+
+        for (const trap of layout.traps) {
+            if (
+                trap.x >= 0 && trap.x < roomWidthTiles &&
+                trap.y >= 0 && trap.y < roomHeightTiles
+            ) {
+                const trapTileX = originTileX + trap.x;
+                const trapTileY = originTileY + trap.y;
+                world.setTileAt(trapTileX, trapTileY, TILE_TYPES.SPIKE);
+            }
+        }
+
+        for (const falsePath of layout.falsePaths || []) {
+            if (
+                falsePath.x >= 0 && falsePath.x < roomWidthTiles &&
+                falsePath.y >= 0 && falsePath.y < roomHeightTiles
+            ) {
+                world.setTileAt(originTileX + falsePath.x, originTileY + falsePath.y, TILE_TYPES.FLOOR);
+            }
+        }
+
+        for (const misdirectionTile of layout.misdirectionTiles || []) {
+            if (
+                misdirectionTile.x >= 0 && misdirectionTile.x < roomWidthTiles &&
+                misdirectionTile.y >= 0 && misdirectionTile.y < roomHeightTiles
+            ) {
+                world.setTileAt(originTileX + misdirectionTile.x, originTileY + misdirectionTile.y, TILE_TYPES.FLOOR);
+            }
+        }
+
+        // Entrance/exit gaps in side walls.
+        world.setTileAt(originTileX, originTileY + roomHeightTiles - 2, TILE_TYPES.EMPTY);
+        world.setTileAt(originTileX + roomWidthTiles - 1, originTileY + roomHeightTiles - 2, TILE_TYPES.EMPTY);
+
+        const roomCenterX = (originTileX + roomWidthTiles / 2) * GAME_CONFIG.TILE_SIZE;
+        const roomCenterY = (originTileY + roomHeightTiles / 2) * GAME_CONFIG.TILE_SIZE;
+
+        memoryMazeState.active = true;
+        memoryMazeState.pendingMilestoneMeters = null;
+        memoryMazeState.lockCamera = true;
+        memoryMazeState.distanceCounterDisabled = true;
+        memoryMazeState.frozenDistanceMeters = Math.floor(player.x / 10);
+        memoryMazeState.roomStartedAt = Date.now();
+        memoryMazeState.spikeRevealEndsAt = memoryMazeState.roomStartedAt + memoryMazeState.spikeBlinkDurationMs;
+        memoryMazeState.spikeBlinkActive = true;
+        memoryMazeState.spikesHidden = false;
+        memoryMazeState.roomSpikeTileKeys = layout.traps
+            .filter((trap) => trap.x >= 0 && trap.x < roomWidthTiles && trap.y >= 0 && trap.y < roomHeightTiles)
+            .map((trap) => `${originTileX + trap.x},${originTileY + trap.y}`);
+        memoryMazeState.roomMisdirectionTiles = (layout.misdirectionTiles || [])
+            .filter((tile) => tile.x >= 0 && tile.x < roomWidthTiles && tile.y >= 0 && tile.y < roomHeightTiles)
+            .map((tile) => ({ x: originTileX + tile.x, y: originTileY + tile.y }));
+        memoryMazeState.misdirectionTilesCollapsed = false;
+        memoryMazeState.roomBounds = {
+            minX: originTileX * GAME_CONFIG.TILE_SIZE,
+            maxX: (originTileX + roomWidthTiles) * GAME_CONFIG.TILE_SIZE,
+            minY: originTileY * GAME_CONFIG.TILE_SIZE,
+            maxY: (originTileY + roomHeightTiles) * GAME_CONFIG.TILE_SIZE
+        };
+
+        memoryMazeState.cameraLockX = Math.max(0, roomCenterX - this.game.canvas.width / 2);
+        memoryMazeState.cameraLockY = Math.max(0, roomCenterY - this.game.canvas.height / 2);
+    }
+
+    checkMemoryMazeMilestoneTriggers() {
+        const memoryMazeState = this.game.memoryMazeState;
+        const player = this.game.player;
+        if (!memoryMazeState || !player) return;
+
+        const currentMeters = Math.floor(player.x / 10);
+
+        while (currentMeters >= memoryMazeState.nextTriggerMeters) {
+            const milestone = memoryMazeState.nextTriggerMeters;
+
+            // Queue the latest pending milestone for upcoming maze-room flow.
+            memoryMazeState.pendingMilestoneMeters = milestone;
+            memoryMazeState.triggeredMilestones.push(milestone);
+            memoryMazeState.nextTriggerMeters += memoryMazeState.triggerIntervalMeters;
+        }
+    }
+
+    updateTimelineLimits(deltaTime) {
+        if (!this.game.timelineLimits) return;
+
+        const limits = this.game.timelineLimits;
+
+        if (limits.overheatWarningMs > 0) {
+            limits.overheatWarningMs = Math.max(0, limits.overheatWarningMs - deltaTime);
+        }
+
+        if (limits.swapLockoutMs > 0) {
+            limits.swapLockoutMs = Math.max(0, limits.swapLockoutMs - deltaTime);
+        }
+
+        if (this.game.currentTimeline === 'corrupt') {
+            const previousRemaining = limits.corruptedRemainingMs;
+            limits.corruptedRemainingMs = Math.max(0, limits.corruptedRemainingMs - deltaTime);
+
+            if (previousRemaining > 0 && limits.corruptedRemainingMs === 0) {
+                this.handleTimelineOverheat();
+            }
+        } else {
+            limits.corruptedRemainingMs = limits.corruptedMaxMs;
+        }
+    }
+
+    handleTimelineOverheat() {
+        this.game.currentTimeline = 'normal';
+
+        if (this.game.timelineLimits) {
+            this.game.timelineLimits.overheatWarningMs = 900;
+            this.game.timelineLimits.corruptedRemainingMs = this.game.timelineLimits.corruptedMaxMs;
+            this.game.timelineLimits.swapLockoutMs = this.game.timelineLimits.swapLockoutDurationMs;
+        }
+
+        if (this.game.player && typeof this.game.player.applyTimelineSwapMomentumCancel === 'function') {
+            this.game.player.applyTimelineSwapMomentumCancel(140);
+        }
+
+        if (this.game.renderer && typeof this.game.renderer.triggerTimelineSwapEffect === 'function') {
+            this.game.renderer.triggerTimelineSwapEffect('normal');
+        }
+
+        if (this.game.audioSystem && typeof this.game.audioSystem.playSound === 'function') {
+            this.game.audioSystem.playSound('damage');
+        }
     }
 
     /**
      * Update camera position to follow player
      */
     updateCamera() {
+        if (this.game.memoryMazeState && this.game.memoryMazeState.lockCamera) {
+            this.game.camera.x = this.game.memoryMazeState.cameraLockX;
+            this.game.camera.y = this.game.memoryMazeState.cameraLockY;
+            return;
+        }
+
         if (this.game.player) {
             this.game.camera.x = this.game.player.x - this.game.canvas.width / 2;
             this.game.camera.y = this.game.player.y - this.game.canvas.height / 2;
@@ -218,7 +437,10 @@ export class GameLoop {
     updateScore() {
         if (this.game.player && this.game.gameState === GAME_STATES.PLAYING) {
             // Update score based on distance traveled
-            const distanceScore = Math.floor(this.game.player.x / 10);
+            const memoryMazeState = this.game.memoryMazeState;
+            const distanceScore = memoryMazeState && memoryMazeState.distanceCounterDisabled
+                ? memoryMazeState.frozenDistanceMeters
+                : Math.floor(this.game.player.x / 10);
             this.game.score = distanceScore + this.game.bonusScore;
         }
     }

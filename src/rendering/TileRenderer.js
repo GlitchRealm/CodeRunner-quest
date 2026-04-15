@@ -6,7 +6,8 @@
 import { GAME_CONFIG, TILE_TYPES, COLORS } from '../utils/constants.js';
 
 export class TileRenderer {
-    constructor() {
+    constructor(game = null) {
+        this.game = game;
         // Performance tracking
         this.lastUpdate = 0;
         this.frameCount = 0;
@@ -49,7 +50,7 @@ export class TileRenderer {
         this.animationTime += deltaTime;
     }/**
      * Draw a tile based on its type
-     */    drawTile(ctx, tileType, screenX, screenY) {
+     */    drawTile(ctx, tileType, screenX, screenY, renderContext = null) {
         // Safety check for invalid coordinates
         if (!isFinite(screenX) || !isFinite(screenY)) {
             console.warn('TileRenderer.drawTile: Invalid screen coordinates', { screenX, screenY, tileType });
@@ -75,7 +76,7 @@ export class TileRenderer {
                 this.drawPlatformTile(ctx, screenX, screenY);
                 break;
             case TILE_TYPES.SPIKE:
-                this.drawSpikeTile(ctx, screenX, screenY, time);
+                this.drawSpikeTile(ctx, screenX, screenY, time, renderContext);
                 break;
             case TILE_TYPES.GLITCH:
                 this.drawGlitchTile(ctx, screenX, screenY, time);
@@ -92,7 +93,78 @@ export class TileRenderer {
             case TILE_TYPES.CRUSHER:
                 this.drawCrusherTile(ctx, screenX, screenY, time);
                 break;
+            case TILE_TYPES.BREAKABLE_WALL:
+                this.drawBreakableWallTile(ctx, screenX, screenY, time);
+                break;
+            case TILE_TYPES.GLITCH_DRONE:
+                this.drawGlitchDroneTile(ctx, screenX, screenY, time);
+                break;
         }
+    }
+
+    drawGlitchDroneTile(ctx, x, y, time) {
+        const bob = Math.sin(time * 8) * 2;
+        const cx = x + GAME_CONFIG.TILE_SIZE / 2;
+        const cy = y + GAME_CONFIG.TILE_SIZE / 2 - 3 + bob;
+
+        ctx.save();
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'rgba(255, 72, 128, 0.8)';
+
+        const bodyGradient = ctx.createRadialGradient(cx - 2, cy - 2, 2, cx, cy, 10);
+        bodyGradient.addColorStop(0, 'rgba(255, 245, 255, 0.95)');
+        bodyGradient.addColorStop(0.45, 'rgba(255, 94, 168, 0.9)');
+        bodyGradient.addColorStop(1, 'rgba(90, 18, 140, 0.95)');
+
+        ctx.fillStyle = bodyGradient;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eye/core
+        ctx.fillStyle = 'rgba(14, 6, 22, 0.9)';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Small scan tail
+        ctx.strokeStyle = 'rgba(255, 170, 220, 0.75)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(cx - 9, cy + 5);
+        ctx.lineTo(cx - 14, cy + 7);
+        ctx.moveTo(cx + 9, cy + 5);
+        ctx.lineTo(cx + 14, cy + 7);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    drawBreakableWallTile(ctx, x, y, time) {
+        const pulse = 0.75 + Math.sin(time * 6) * 0.2;
+
+        const wallGradient = ctx.createLinearGradient(x, y, x + GAME_CONFIG.TILE_SIZE, y + GAME_CONFIG.TILE_SIZE);
+        wallGradient.addColorStop(0, `rgba(168, 85, 247, ${pulse})`);
+        wallGradient.addColorStop(0.55, `rgba(127, 29, 255, ${pulse})`);
+        wallGradient.addColorStop(1, `rgba(69, 10, 120, ${pulse})`);
+
+        ctx.fillStyle = wallGradient;
+        ctx.fillRect(x, y, GAME_CONFIG.TILE_SIZE, GAME_CONFIG.TILE_SIZE);
+
+        // Fracture lines to communicate breakable/glitched structure.
+        ctx.strokeStyle = 'rgba(243, 232, 255, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x + 4, y + 6);
+        ctx.lineTo(x + 14, y + 14);
+        ctx.lineTo(x + 10, y + 24);
+        ctx.moveTo(x + 20, y + 4);
+        ctx.lineTo(x + 24, y + 12);
+        ctx.lineTo(x + 18, y + 20);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(15, 8, 28, 0.85)';
+        ctx.strokeRect(x + 0.5, y + 0.5, GAME_CONFIG.TILE_SIZE - 1, GAME_CONFIG.TILE_SIZE - 1);
     }
     
     /**
@@ -137,12 +209,22 @@ export class TileRenderer {
         ctx.fillRect(x + GAME_CONFIG.TILE_SIZE - 4, y + 6, 2, 2);
     }    /**
      * Draw spike tile - optimized design
-     */    drawSpikeTile(ctx, x, y, time) {
+     */    drawSpikeTile(ctx, x, y, time, renderContext = null) {
         // Safety check for invalid coordinates
         if (!isFinite(x) || !isFinite(y) || !isFinite(time)) {
             console.warn('TileRenderer.drawSpikeTile: Invalid coordinates', { x, y, time });
             return;
         }
+
+            const spikeVisualMode = this.getMemoryMazeSpikeVisualMode(renderContext);
+            if (spikeVisualMode === 'hidden') {
+                return;
+            }
+
+            if (spikeVisualMode === 'blink') {
+                this.drawMemoryMazeBlinkSpike(ctx, x, y, time);
+                return;
+            }
 
         // Render differently based on detail level
         switch (this.detailLevel) {
@@ -156,6 +238,62 @@ export class TileRenderer {
                 this.drawDetailedSpike(ctx, x, y, time);
                 break;
         }
+    }
+
+    getMemoryMazeSpikeVisualMode(renderContext) {
+        if (!this.game || !this.game.memoryMazeState || !renderContext) {
+            return 'normal';
+        }
+
+        const { tileX, tileY } = renderContext;
+        if (!Number.isFinite(tileX) || !Number.isFinite(tileY)) {
+            return 'normal';
+        }
+
+        const memoryMazeState = this.game.memoryMazeState;
+        if (!memoryMazeState.active || !Array.isArray(memoryMazeState.roomSpikeTileKeys)) {
+            return 'normal';
+        }
+
+        const key = `${tileX},${tileY}`;
+        if (!memoryMazeState.roomSpikeTileKeys.includes(key)) {
+            return 'normal';
+        }
+
+        if (memoryMazeState.spikesHidden) {
+            return 'hidden';
+        }
+
+        if (memoryMazeState.spikeBlinkActive) {
+            return 'blink';
+        }
+
+        return 'normal';
+    }
+
+    drawMemoryMazeBlinkSpike(ctx, x, y, time) {
+        const blinkPulse = Math.sin(time * 0.035) > 0 ? 1 : 0;
+        const alpha = blinkPulse ? 0.95 : 0.45;
+
+        ctx.save();
+        ctx.shadowBlur = 9;
+        ctx.shadowColor = `rgba(255, 38, 38, ${alpha})`;
+        ctx.fillStyle = `rgba(255, 48, 48, ${alpha})`;
+        ctx.fillRect(x, y + GAME_CONFIG.TILE_SIZE - 8, GAME_CONFIG.TILE_SIZE, 8);
+
+        for (let i = 0; i < 4; i++) {
+            const spikeX = x + 3 + i * 6;
+            const spikeTop = y + 4 + (blinkPulse ? 0 : 2);
+
+            ctx.beginPath();
+            ctx.moveTo(spikeX + 3, spikeTop);
+            ctx.lineTo(spikeX + 6, y + GAME_CONFIG.TILE_SIZE - 8);
+            ctx.lineTo(spikeX, y + GAME_CONFIG.TILE_SIZE - 8);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        ctx.restore();
     }
 
     /**

@@ -344,31 +344,44 @@
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>      <!-- Firebase Configuration -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="./env-config.js"></script>
+    <!-- Firebase Configuration -->
     <script>
-        // Main Firebase configuration - using the established coderunner project for everything
+        // Firebase configuration is runtime-injected via window.__FIREBASE_CONFIG__.
+        const runtimeFirebaseConfig = window.__FIREBASE_CONFIG__ || {};
         const firebaseConfig = {
-            apiKey: "AIzaSyCo5hr7ULHLL_0UAAst74g8ePZxkB7OHFQ",
-            authDomain: "shared-sign-in.firebaseapp.com",
-            projectId: "shared-sign-in",
-            storageBucket: "shared-sign-in.firebasestorage.app",
-            messagingSenderId: "332039027753",
-            appId: "1:332039027753:web:aa7c6877d543bb90363038",
-            measurementId: "G-KK5XVVLMVN"
-};
+            apiKey: runtimeFirebaseConfig.apiKey || '',
+            authDomain: runtimeFirebaseConfig.authDomain || '',
+            databaseURL: runtimeFirebaseConfig.databaseURL || '',
+            projectId: runtimeFirebaseConfig.projectId || '',
+            storageBucket: runtimeFirebaseConfig.storageBucket || '',
+            messagingSenderId: runtimeFirebaseConfig.messagingSenderId || '',
+            appId: runtimeFirebaseConfig.appId || '',
+            measurementId: runtimeFirebaseConfig.measurementId || ''
+        };
 
-        // Initialize Firebase with single configuration
-        firebase.initializeApp(firebaseConfig);
-        
-        // Get services from the default app
-        const database = firebase.database();
-        const auth = firebase.auth();
-        const firestore = firebase.firestore();
-        
-        // Make all available globally for the game
-        window.firebaseDatabase = database;
-        window.firebaseAuth = auth;
-        window.firebaseFirestore = firestore;
+        const requiredFirebaseKeys = ['apiKey', 'authDomain', 'projectId', 'appId'];
+        const missingFirebaseKeys = requiredFirebaseKeys.filter((k) => !firebaseConfig[k]);
+
+        if (missingFirebaseKeys.length === 0) {
+            firebase.initializeApp(firebaseConfig);
+
+            // Get services from the default app
+            const database = firebase.database();
+            const auth = firebase.auth();
+            const firestore = firebase.firestore();
+
+            // Make all available globally for the game
+            window.firebaseDatabase = database;
+            window.firebaseAuth = auth;
+            window.firebaseFirestore = firestore;
+        } else {
+            console.warn('Firebase config missing required keys:', missingFirebaseKeys.join(', '));
+            window.firebaseDatabase = null;
+            window.firebaseAuth = null;
+            window.firebaseFirestore = null;
+        }
         
         // Stub function for login status updates (prevents console errors)
         function updateLoginStatus() {

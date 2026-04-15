@@ -161,12 +161,16 @@ export class AudioSystem {
             menuClose: this.createSynthSound('menuClose'),
             purchase: this.createSynthSound('purchase'),
             damage: this.createSynthSound('damage'),
-            powerup: this.createSynthSound('powerup')
+            powerup: this.createSynthSound('powerup'),
+            timelineSwap: this.createSynthSound('timelineSwap')
         };
           // Load sound effects
         Object.entries(soundEffects).forEach(([name, audioData]) => {
             this.sounds[name] = this.createAudioElement(audioData.dataUrl);
         });
+
+        // Optional external SFX override for timeline swap.
+        this.tryLoadOptionalSound('timelineSwap', 'assets/sfx/glitch-swap.ogg');
         
         // Available music tracks
         this.availableTracks = [
@@ -344,6 +348,12 @@ export class AudioSystem {
                 waveType = 'sine';
                 envelope = { attack: 0.01, decay: 0.2, sustain: 0.5, release: 0.3 };
                 break;
+            case 'timelineSwap':
+                duration = 0.28;
+                frequency = 320;
+                waveType = 'sawtooth';
+                envelope = { attack: 0.005, decay: 0.12, sustain: 0.35, release: 0.15 };
+                break;
             default:
                 duration = 0.2;
                 frequency = 440;
@@ -461,6 +471,19 @@ export class AudioSystem {
         audio.src = src;
         
         return audio;
+    }
+
+    tryLoadOptionalSound(soundName, src) {
+        const audio = new Audio();
+        audio.preload = 'auto';
+        audio.crossOrigin = 'anonymous';
+
+        audio.addEventListener('canplaythrough', () => {
+            this.sounds[soundName] = audio;
+            this.updateAllVolumes();
+        }, { once: true });
+
+        audio.src = src;
     }
       playSound(soundName, volumeOverride = null) {
         if (this.isMuted || !this.sounds[soundName]) {

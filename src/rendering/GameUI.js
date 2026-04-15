@@ -362,6 +362,8 @@ export class GameUI {    constructor(game) {
      * Draw the main HUD with a modern cyberpunk design
      */
     drawMainHUD() {
+        this.drawTimelineCountdownBar();
+
         // Draw health hearts in their original position
         if (this.game.player) {
             this.drawHealthHearts();
@@ -382,6 +384,117 @@ export class GameUI {    constructor(game) {
 
         // Draw right panel (moved to top-right corner)
         this.drawRightPanel(true);
+
+        // Timeline state icon (top-right)
+        this.drawTimelineStateIcon();
+    }
+
+    drawTimelineStateIcon() {
+        const inCorrupt = this.game.currentTimeline === 'corrupt';
+        const label = inCorrupt ? 'C' : 'N';
+        const tint = inCorrupt ? '#ff7fa8' : '#40d158';
+
+        const size = 24;
+        const x = this.canvas.width - size - 18;
+        const y = 138;
+
+        this.ctx.save();
+
+        // Badge background
+        this.ctx.fillStyle = 'rgba(10, 16, 28, 0.78)';
+        this.drawRoundedRect(this.ctx, x, y, size, size, 6);
+        this.ctx.fill();
+
+        // Tinted border and glow
+        this.ctx.shadowBlur = 8;
+        this.ctx.shadowColor = tint;
+        this.ctx.strokeStyle = tint;
+        this.ctx.lineWidth = 1.5;
+        this.drawRoundedRect(this.ctx, x, y, size, size, 6);
+        this.ctx.stroke();
+
+        // N/C glyph
+        this.ctx.shadowBlur = 0;
+        this.ctx.fillStyle = tint;
+        this.ctx.font = 'bold 13px "SF Mono", "Monaco", monospace';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText(label, x + size / 2, y + size / 2 + 0.5);
+
+        // Reset text alignment for subsequent UI draws.
+        this.ctx.textAlign = 'left';
+        this.ctx.textBaseline = 'alphabetic';
+        this.ctx.restore();
+    }
+
+    drawTimelineCountdownBar() {
+        const limits = this.game.timelineLimits;
+        if (!limits || !limits.corruptedMaxMs) return;
+
+        const maxMs = limits.corruptedMaxMs;
+        const remainingMs = Math.max(0, Math.min(maxMs, limits.corruptedRemainingMs));
+        const ratio = maxMs > 0 ? remainingMs / maxMs : 0;
+
+        const barWidth = 260;
+        const barHeight = 10;
+        const x = Math.floor((this.canvas.width - barWidth) / 2);
+        const y = 12;
+
+        // Bar frame
+        this.ctx.fillStyle = 'rgba(10, 16, 28, 0.72)';
+        this.drawRoundedRect(this.ctx, x - 6, y - 6, barWidth + 12, barHeight + 20, 8);
+        this.ctx.fill();
+
+        // Track
+        this.ctx.fillStyle = 'rgba(120, 132, 150, 0.35)';
+        this.drawRoundedRect(this.ctx, x, y, barWidth, barHeight, 5);
+        this.ctx.fill();
+
+        // Fill color: safe -> warning -> critical
+        let fillColor = '#40d158';
+        if (ratio <= 0.25) fillColor = '#f85149';
+        else if (ratio <= 0.55) fillColor = '#d1a01f';
+        else if (ratio <= 0.8) fillColor = '#79c0ff';
+
+        const fillWidth = Math.max(0, Math.floor(barWidth * ratio));
+        if (fillWidth > 0) {
+            this.ctx.fillStyle = fillColor;
+            this.drawRoundedRect(this.ctx, x, y, fillWidth, barHeight, 5);
+            this.ctx.fill();
+        }
+
+        // Label and timer
+        const inCorrupt = this.game.currentTimeline === 'corrupt';
+        const seconds = (remainingMs / 1000).toFixed(1);
+        this.ctx.fillStyle = inCorrupt ? '#ff7fa8' : '#8b949e';
+        this.ctx.font = '11px "SF Mono", "Monaco", monospace';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(inCorrupt ? `CORRUPTED ${seconds}s` : 'NORMAL', x + barWidth / 2, y + 22);
+
+        const overheatWarningMs = this.game.timelineLimits?.overheatWarningMs || 0;
+        if (overheatWarningMs > 0) {
+            const pulse = 0.45 + Math.sin(Date.now() * 0.03) * 0.2;
+            this.ctx.save();
+            this.ctx.globalAlpha = Math.max(0.2, pulse);
+            this.ctx.fillStyle = 'rgba(248, 81, 73, 0.95)';
+            this.drawRoundedRect(this.ctx, x - 10, y - 10, barWidth + 20, barHeight + 30, 9);
+            this.ctx.fill();
+            this.ctx.globalAlpha = 1;
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = 'bold 12px "SF Mono", "Monaco", monospace';
+            this.ctx.fillText('OVERHEAT - AUTO SWAP', x + barWidth / 2, y + 22);
+            this.ctx.restore();
+        }
+
+        const swapLockoutMs = this.game.timelineLimits?.swapLockoutMs || 0;
+        if (swapLockoutMs > 0) {
+            const lockSeconds = (swapLockoutMs / 1000).toFixed(1);
+            this.ctx.fillStyle = '#f85149';
+            this.ctx.font = 'bold 11px "SF Mono", "Monaco", monospace';
+            this.ctx.fillText(`SWAP COOLDOWN ${lockSeconds}s`, x + barWidth / 2, y + 36);
+        }
+
+        this.ctx.textAlign = 'left';
     }
 
     /**
@@ -398,7 +511,10 @@ export class GameUI {    constructor(game) {
         this.drawModernPanel(x, y, panelWidth, panelHeight, 'rgba(88, 166, 255, 0.1)');
         
         // Score section
-        const meters = this.game.player ? Math.floor(this.game.player.x / 10) : 0;
+        const memoryMazeState = this.game.memoryMazeState;
+        const meters = memoryMazeState && memoryMazeState.distanceCounterDisabled
+            ? memoryMazeState.frozenDistanceMeters
+            : (this.game.player ? Math.floor(this.game.player.x / 10) : 0);
         const bestScore = this.game.bestScores[this.game.selectedDifficulty] || 0;
         
     // Score label and value (compact layout)
@@ -413,7 +529,7 @@ export class GameUI {    constructor(game) {
     // Distance (smaller)
     this.ctx.fillStyle = 'rgba(240, 246, 252, 0.8)';
     this.ctx.font = '11px "SF Mono", "Monaco", monospace';
-    this.ctx.fillText('DISTANCE', x + 12, y + 62);
+    this.ctx.fillText(memoryMazeState && memoryMazeState.distanceCounterDisabled ? 'DISTANCE LOCK' : 'DISTANCE', x + 12, y + 62);
 
     this.ctx.fillStyle = '#40d158';
     this.ctx.font = 'bold 14px "SF Mono", "Monaco", monospace';

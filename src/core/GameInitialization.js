@@ -422,6 +422,29 @@ export class GameInitialization {
         
         // System controls
         this.game.inputManager.setCallback('togglePerformance', () => this.game.togglePerformanceDisplay());
+        this.game.inputManager.setCallback('timelineSwap', () => {
+            if (this.game.gameState !== GAME_STATES.PLAYING || this.game.isPaused) {
+                return;
+            }
+
+            if (this.game.timelineLimits && this.game.timelineLimits.swapLockoutMs > 0) {
+                return;
+            }
+
+            if (this.game.player && typeof this.game.player.applyTimelineSwapMomentumCancel === 'function') {
+                this.game.player.applyTimelineSwapMomentumCancel();
+            }
+
+            this.game.currentTimeline = this.game.currentTimeline === 'corrupt' ? 'normal' : 'corrupt';
+
+            if (this.game.renderer && typeof this.game.renderer.triggerTimelineSwapEffect === 'function') {
+                this.game.renderer.triggerTimelineSwapEffect(this.game.currentTimeline);
+            }
+
+            if (this.game.audioSystem && typeof this.game.audioSystem.playSound === 'function') {
+                this.game.audioSystem.playSound('timelineSwap');
+            }
+        });
         this.game.inputManager.setCallback('tutorial', () => this.game.handleTutorialToggle());
         this.game.inputManager.setCallback('fullscreen', () => this.game.toggleFullscreen());
         this.game.inputManager.setCallback('home', () => this.game.handleHomeKey());

@@ -34,7 +34,8 @@ export class InputManager {
             shopScrollUp: null,
             shopScrollDown: null,
             achievementsScrollUp: null,
-            achievementsScrollDown: null
+            achievementsScrollDown: null,
+            timelineSwap: null
         };
         
         // Add reference to check for text input mode
@@ -81,6 +82,13 @@ export class InputManager {
         
         // Get actions for this key from keybind manager
         const actions = window.keybindManager ? window.keybindManager.getActionsForKey(e.code) : [];
+
+        // Hard-bind timeline swap to E for the new timeline mechanic.
+        if (!isInNameInput && !isTypingInField && e.code === 'KeyE' && this.callbacks.timelineSwap) {
+            e.preventDefault();
+            this.callbacks.timelineSwap();
+            return;
+        }
 
         // Always prevent browser scrolling with arrow keys while game listeners are active.
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
@@ -215,6 +223,9 @@ export class InputManager {
                 this.callbacks.achievementsScrollDown();
             }            if (actions.includes('togglePerformance') && this.callbacks.togglePerformance) {
                 this.callbacks.togglePerformance();
+            }
+            if (actions.includes('timelineSwap') && this.callbacks.timelineSwap) {
+                this.callbacks.timelineSwap();
             }
             if (actions.includes('tutorial') && this.callbacks.tutorial) {
                 this.callbacks.tutorial();
